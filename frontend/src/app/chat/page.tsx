@@ -44,9 +44,9 @@ export default function ChatPage() {
       const response = await api.chat({ message: userMessage.content });
       
       const assistantMessage: ChatMessageType = {
-        id: (Date.now() + 1).toString(),
-        role: response.role || 'assistant',
-        content: response.response
+        id: response.assistant_message?.id?.toString() || (Date.now() + 1).toString(),
+        role: response.assistant_message?.role || 'assistant',
+        content: response.assistant_message?.content || 'Sorry, I got an empty response.'
       };
       
       setMessages(prev => [...prev, assistantMessage]);
