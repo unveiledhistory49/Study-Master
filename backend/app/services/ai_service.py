@@ -1,5 +1,5 @@
-import httpx
 import logging
+from openai import AsyncOpenAI
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -23,13 +23,19 @@ You are patient, encouraging, and always aim to build the student's confidence w
 
 
 class AIService:
-    """Client for NVIDIA NIM API with DeepSeek model."""
+    """Client for NVIDIA NIM API with DeepSeek model using OpenAI client."""
 
     def __init__(self):
         self.api_key = settings.NVIDIA_API_KEY
-        self.api_url = settings.NVIDIA_API_URL
+        # If the URL still has /chat/completions from an old .env, strip it
+        self.api_url = settings.NVIDIA_API_URL.replace("/chat/completions", "")
         self.model = settings.NVIDIA_MODEL
-        self.client = httpx.AsyncClient(timeout=60.0)
+        
+        self.client = AsyncOpenAI(
+            base_url=self.api_url,
+            api_key=self.api_key,
+            timeout=60.0,
+        )
 
     async def chat(
         self,
@@ -60,36 +66,25 @@ class AIService:
         messages.append({"role": "user", "content": message})
 
         try:
-            response = await self.client.post(
-                self.api_url,
-                json={
-                    "model": self.model,
-                    "messages": messages,
-                    "temperature": 0.6,
-                    "top_p": 0.7,
-                    "max_tokens": 4096,
-                },
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.6,
+                top_p=0.7,
+                max_tokens=4096,
+                extra_body={"chat_template_kwargs":{"thinking":True,"reasoning_effort":"high"}},
+                stream=False
             )
 
-            if response.status_code == 200:
-                data = response.json()
-                content = data["choices"][0]["message"]["content"]
-                # DeepSeek R1 may include <think>...</think> tags; strip them for cleaner output
-                if "<think>" in content:
-                    import re
-                    content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
-                return content
-            else:
-                logger.error(f"NVIDIA API error: {response.status_code} - {response.text}")
-                return self._fallback_response(message, subject_name, concept_name)
+            content = response.choices[0].message.content
+            
+            # DeepSeek R1 may include <think>...</think> tags; strip them for cleaner output
+            if "<think>" in content and content is not None:
+                import re
+                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+                
+            return content
 
-        except httpx.TimeoutException:
-            logger.error("NVIDIA API timeout")
-            return self._fallback_response(message, subject_name, concept_name)
         except Exception as e:
             logger.error(f"AI service error: {e}")
             return self._fallback_response(message, subject_name, concept_name)
@@ -116,7 +111,7 @@ class AIService:
 
     async def close(self):
         """Close the HTTP client."""
-        await self.client.aclose()
+        await self.client.close()
 
 
 # Singleton instance

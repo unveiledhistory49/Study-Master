@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./studymaster.db"
     CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     NVIDIA_API_KEY: str = ""
-    NVIDIA_API_URL: str = "https://integrate.api.nvidia.com/v1/chat/completions"
-    NVIDIA_MODEL: str = "deepseek-ai/deepseek-r1"
+    NVIDIA_API_URL: str = "https://integrate.api.nvidia.com/v1"
+    NVIDIA_MODEL: str = "deepseek-ai/deepseek-v4-flash"
 
     class Config:
         env_file = ".env"
