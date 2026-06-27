@@ -65,4 +65,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+    
+  updateMastery: (concept_id: string | number, passed: boolean) =>
+    fetchWithAuth(`/profile/mastery/${concept_id}`, {
+      method: 'POST',
+      body: JSON.stringify({ passed }),
+    }),
 };

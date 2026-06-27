@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import QuizModal from '@/components/QuizModal';
 import { api } from '@/lib/api';
 import { Concept, Topic, Subject } from '@/lib/types';
 
@@ -15,6 +16,8 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
   const [topic, setTopic] = useState<Topic | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [isMastered, setIsMastered] = useState(false);
 
   useEffect(() => {
     const fetchConcept = async () => {
@@ -40,6 +43,19 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
 
     fetchConcept();
   }, [unwrappedParams.id]);
+
+  const handleQuizComplete = async (passed: boolean) => {
+    setIsQuizOpen(false);
+    if (passed) {
+      setIsMastered(true);
+      try {
+        await api.updateMastery(concept!.id, true);
+        alert('Congratulations! Mastery score updated!');
+      } catch (err) {
+        console.error('Failed to update mastery:', err);
+      }
+    }
+  };
 
   if (isLoading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
   if (!concept) return <ProtectedRoute><div className="text-center p-10">Concept not found</div></ProtectedRoute>;
@@ -114,18 +130,27 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <span className="text-sm text-[var(--text-muted)]">Status:</span>
               <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                concept.mastery_status === 'Mastered' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                isMastered || concept.mastery_status === 'Mastered' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                 concept.mastery_status === 'In progress' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                 'bg-slate-500/10 text-slate-400 border-slate-500/20'
               }`}>
-                {concept.mastery_status}
+                {isMastered ? 'Mastered' : concept.mastery_status}
               </span>
             </div>
             
             <div className="flex gap-4 w-full sm:w-auto">
-              <button className="btn-secondary flex-1 sm:flex-none">
-                Mark as Mastered
-              </button>
+              {concept.quiz_data ? (
+                <button 
+                  onClick={() => setIsQuizOpen(true)} 
+                  className="btn-secondary flex-1 sm:flex-none border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-400 text-[var(--text-primary)]"
+                >
+                  Take Concept Quiz
+                </button>
+              ) : (
+                <button className="btn-secondary flex-1 sm:flex-none opacity-50 cursor-not-allowed">
+                  No Quiz Available
+                </button>
+              )}
               <button onClick={() => router.push('/chat')} className="btn-primary flex-1 sm:flex-none flex items-center justify-center gap-2">
                 <span>💬</span> Discuss with AI
               </button>
@@ -133,6 +158,14 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       </div>
+      {concept.quiz_data && (
+        <QuizModal 
+          isOpen={isQuizOpen} 
+          onClose={() => setIsQuizOpen(false)} 
+          questions={concept.quiz_data.questions} 
+          onComplete={handleQuizComplete} 
+        />
+      )}
     </ProtectedRoute>
   );
 }
