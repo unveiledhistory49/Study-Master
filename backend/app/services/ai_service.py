@@ -76,12 +76,19 @@ class AIService:
                 stream=False
             )
 
-            content = response.choices[0].message.content
+            content = response.choices[0].message.content or ""
             
-            # DeepSeek R1 may include <think>...</think> tags; strip them for cleaner output
-            if "<think>" in content and content is not None:
+            # If it's a reasoning model, the answer might be in reasoning or reasoning_content
+            reasoning = getattr(response.choices[0].message, "reasoning", None) or getattr(response.choices[0].message, "reasoning_content", None)
+            
+            # Some models put thinking in <think> tags inside content
+            if "<think>" in content:
                 import re
                 content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+                
+            # If content is empty but reasoning exists, return reasoning (or a mix)
+            if not content and reasoning:
+                content = reasoning.strip()
                 
             return content
 
