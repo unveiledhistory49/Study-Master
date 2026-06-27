@@ -48,6 +48,42 @@ SUBJECTS = [
     },
 ]
 
+CELL_CONTENT = """# Cell Structure and Organelles
+Cells are the basic functional and structural units of all living organisms. While cells vary greatly in size and shape, they share certain common structures called organelles, which are specialized parts that perform specific functions.
+
+## Key Organelles:
+* **Nucleus:** The control center of the cell. It contains DNA (genetic material) and coordinates cell activities like growth, metabolism, and reproduction.
+* **Mitochondria:** The "powerhouses" of the cell. They generate most of the cell's supply of adenosine triphosphate (ATP) through cellular respiration.
+* **Ribosomes:** The sites of protein synthesis. They can be found floating freely in the cytoplasm or attached to the rough endoplasmic reticulum.
+* **Endoplasmic Reticulum (ER):** A network of membranous tubules and sacs. Rough ER (with ribosomes) is involved in protein synthesis and transport, while Smooth ER is involved in lipid synthesis and detoxification.
+* **Golgi Apparatus:** Modifies, sorts, and packages proteins and other materials from the ER for storage or secretion.
+* **Lysosomes:** Contain digestive enzymes to break down waste materials and cellular debris.
+* **Cell Membrane:** A selectively permeable barrier that surrounds the cell, controlling the movement of substances in and out.
+"""
+
+CELL_QUIZ = {
+    "questions": [
+        {
+            "id": 1,
+            "question": "Which organelle is considered the powerhouse of the cell?",
+            "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi Apparatus"],
+            "correctAnswer": 1
+        },
+        {
+            "id": 2,
+            "question": "Where does protein synthesis primarily occur?",
+            "options": ["Lysosomes", "Smooth ER", "Ribosomes", "Cell Membrane"],
+            "correctAnswer": 2
+        },
+        {
+            "id": 3,
+            "question": "What is the function of the Golgi Apparatus?",
+            "options": ["Energy production", "Digest waste", "Sort and package proteins", "Synthesize lipids"],
+            "correctAnswer": 2
+        }
+    ]
+}
+
 BIOLOGY_TOPICS = [
     {
         "name": "Recognising Living Things",
@@ -71,7 +107,7 @@ BIOLOGY_TOPICS = [
         "description": "Structure and function of the basic unit of life",
         "concepts": [
             {"name": "Cell Theory", "description": "Principles of cell theory and contributions of scientists", "difficulty": 1, "importance": 4, "utme_weight": 2.0, "time": 15},
-            {"name": "Cell Structure and Organelles", "description": "Nucleus, mitochondria, ribosomes, endoplasmic reticulum, Golgi apparatus, lysosomes, cell membrane", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 45},
+            {"name": "Cell Structure and Organelles", "description": "Nucleus, mitochondria, ribosomes, endoplasmic reticulum, Golgi apparatus, lysosomes, cell membrane", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 45, "content": CELL_CONTENT, "quiz_data": CELL_QUIZ},
             {"name": "Plant vs Animal Cells", "description": "Differences in cell wall, chloroplasts, vacuoles, and shape", "difficulty": 2, "importance": 5, "utme_weight": 3.0, "time": 20},
             {"name": "Cell Division", "description": "Mitosis and meiosis — stages, significance, and differences", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 40},
         ],
@@ -443,9 +479,11 @@ async def seed_database():
                         description=concept_data["description"],
                         difficulty=concept_data["difficulty"],
                         importance=concept_data["importance"],
-                        utme_weight=concept_data["utme_weight"],
+                        utme_weight=concept_data.get("utme_weight", 1.0),
                         mastery_threshold=0.8,
-                        estimated_time_minutes=concept_data["time"],
+                        estimated_time_minutes=concept_data.get("time", 30),
+                        content=concept_data.get("content"),
+                        quiz_data=concept_data.get("quiz_data"),
                         order_index=concept_idx,
                     )
                     session.add(concept)
