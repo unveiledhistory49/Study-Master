@@ -23,10 +23,10 @@ export interface Topic {
 }
 
 export interface Question {
-  id: string | number;
+  id: number;
   question: string;
   options: string[];
-  correctAnswer: string | number;
+  correctAnswer: number;
 }
 
 export interface Concept {
