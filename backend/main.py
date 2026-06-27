@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db, close_db
+from app.seed import seed_database
 from app.api import auth, subjects, topics, concepts, profile, chat
 from app.services.ai_service import ai_service
 from app.config import settings
@@ -15,8 +16,8 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     logger.info("Starting StudyMaster API...")
-    await init_db()
-    logger.info("Database initialized.")
+    await seed_database()
+    logger.info("Database initialized and seeded.")
     yield
     logger.info("Shutting down StudyMaster API...")
     await ai_service.close()
