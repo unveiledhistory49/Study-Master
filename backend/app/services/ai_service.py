@@ -94,29 +94,7 @@ class AIService:
 
         except Exception as e:
             logger.error(f"AI service error: {e}")
-            return self._fallback_response(message, subject_name, concept_name, error_msg=str(e))
-
-    def _fallback_response(
-        self,
-        message: str,
-        subject_name: str | None = None,
-        concept_name: str | None = None,
-        error_msg: str = "",
-    ) -> str:
-        """Provide a helpful fallback response when the AI API is unavailable."""
-        subject_text = f" about {subject_name}" if subject_name else ""
-        concept_text = f", specifically on '{concept_name}'," if concept_name else ""
-
-        return (
-            f"I'm currently experiencing a temporary connection issue with my AI engine, "
-            f"but I'm still here to help you{subject_text}{concept_text}!\n\n"
-            f"*(Diagnostic Info: {error_msg})*\n\n"
-            f"Here are some things you can do while I reconnect:\n\n"
-            f"1. **Review your notes** on the topic\n"
-            f"2. **Practice past UTME questions** related to this subject\n"
-            f"3. **Try rephrasing your question** and asking again in a moment\n\n"
-            f"I'll be back to full capacity shortly. Your learning journey continues! 📚"
-        )
+            return f"API Error: {str(e)}"
 
     async def close(self):
         """Close the HTTP client."""
