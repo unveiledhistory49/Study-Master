@@ -3,7 +3,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
@@ -32,8 +32,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 
 async def authenticate_user(db: AsyncSession, username: str, password: str) -> User | None:
-    """Authenticate a user by username and password."""
-    result = await db.execute(select(User).where(User.username == username))
+    """Authenticate a user by username and password (case-insensitive)."""
+    result = await db.execute(select(User).where(func.lower(User.username) == username.lower()))
     user = result.scalar_one_or_none()
     if user is None:
         return None
