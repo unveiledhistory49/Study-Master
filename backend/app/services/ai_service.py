@@ -69,9 +69,9 @@ class AIService:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=0.6,
-                top_p=0.7,
-                max_tokens=4096,
+                temperature=1.0,
+                top_p=0.95,
+                max_tokens=8192,
                 extra_body={"chat_template_kwargs":{"thinking":True,"reasoning_effort":"high"}},
                 stream=False
             )
@@ -94,13 +94,14 @@ class AIService:
 
         except Exception as e:
             logger.error(f"AI service error: {e}")
-            return self._fallback_response(message, subject_name, concept_name)
+            return self._fallback_response(message, subject_name, concept_name, error_msg=str(e))
 
     def _fallback_response(
         self,
         message: str,
         subject_name: str | None = None,
         concept_name: str | None = None,
+        error_msg: str = "",
     ) -> str:
         """Provide a helpful fallback response when the AI API is unavailable."""
         subject_text = f" about {subject_name}" if subject_name else ""
@@ -109,6 +110,7 @@ class AIService:
         return (
             f"I'm currently experiencing a temporary connection issue with my AI engine, "
             f"but I'm still here to help you{subject_text}{concept_text}!\n\n"
+            f"*(Diagnostic Info: {error_msg})*\n\n"
             f"Here are some things you can do while I reconnect:\n\n"
             f"1. **Review your notes** on the topic\n"
             f"2. **Practice past UTME questions** related to this subject\n"
