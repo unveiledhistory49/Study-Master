@@ -22,13 +22,20 @@ export interface Topic {
   concepts?: Concept[];
 }
 
+export interface Question {
+  id: string | number;
+  question: string;
+  options: string[];
+  correctAnswer: string | number;
+}
+
 export interface Concept {
   id: number;
   name: string;
   topic_id: number;
   description: string;
   content: string;
-  quiz_data?: { questions: Record<string, unknown>[] };
+  quiz_data?: { questions: Question[] };
   difficulty: number;
   importance: number;
   prerequisites: string;
