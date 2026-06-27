@@ -28,7 +28,7 @@ export interface Concept {
   topic_id: number;
   description: string;
   content: string;
-  quiz_data?: { questions: any[] };
+  quiz_data?: { questions: Record<string, unknown>[] };
   difficulty: number;
   importance: number;
   prerequisites: string;
