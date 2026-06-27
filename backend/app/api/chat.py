@@ -32,12 +32,14 @@ async def chat(
 
     # Validate concept_id if provided
     concept_name = None
+    concept_content = None
     if request.concept_id:
         result = await db.execute(select(Concept).where(Concept.id == request.concept_id))
         concept = result.scalar_one_or_none()
         if concept is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Concept not found")
         concept_name = concept.name
+        concept_content = concept.content
 
     # Get recent conversation history for context
     history_result = await db.execute(
@@ -69,6 +71,7 @@ async def chat(
         message=request.message,
         subject_name=subject_name,
         concept_name=concept_name,
+        concept_content=concept_content,
         conversation_history=conversation_history,
     )
 

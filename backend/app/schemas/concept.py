@@ -13,6 +13,8 @@ class ConceptDetail(BaseModel):
     mastery_threshold: float
     estimated_time_minutes: int
     order_index: int
+    content: str | None = None
+    quiz_data: dict | None = None
     created_at: datetime
     topic_name: str = ""
     subject_name: str = ""

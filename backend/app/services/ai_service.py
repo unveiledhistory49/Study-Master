@@ -36,6 +36,7 @@ class AIService:
         message: str,
         subject_name: str | None = None,
         concept_name: str | None = None,
+        concept_content: str | None = None,
         conversation_history: list[dict] | None = None,
     ) -> str:
         """Send a message to the AI and get a response."""
@@ -46,6 +47,8 @@ class AIService:
             system_content += f"\n\nThe student is currently studying {subject_name}."
         if concept_name:
             system_content += f" Specifically, they are working on the concept: {concept_name}."
+        if concept_content:
+            system_content += f"\n\nHere are the exact textbook notes the student is reading right now. Base your answers strictly on this content if relevant:\n\n{concept_content}"
 
         messages = [{"role": "system", "content": system_content}]
 
