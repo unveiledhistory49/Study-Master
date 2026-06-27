@@ -493,6 +493,59 @@ async def seed_database():
 
         print(f"✅ Created {total_topics} topics and {total_concepts} concepts")
 
+        # ── PARSE ACTUAL MATERIALS ───────────────────────────────────────
+        import os, re
+        print("📖 Parsing biology materials from markdown...")
+        materials_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'materials', 'markdown')
+        if os.path.exists(materials_dir):
+            biology_files = [f for f in os.listdir(materials_dir) if 'BIOLOGY' in f.upper() and f.endswith('.md')]
+            biology_subject = subject_map.get("Biology")
+            if biology_subject:
+                for file in biology_files:
+                    filepath = os.path.join(materials_dir, file)
+                    with open(filepath, 'r') as f:
+                        content = f.read()
+                    
+                    parts = re.split(r'TOPIC:\s*', content)
+                    if len(parts) > 1:
+                        topic_name = file.replace('.md', '').strip()[:100]
+                        topic = Topic(name=topic_name, description=f"Notes from {topic_name}", subject_id=biology_subject.id, order_index=total_topics)
+                        session.add(topic)
+                        await session.flush()
+                        total_topics += 1
+                        
+                        for part in parts[1:]:
+                            lines = part.split('\n')
+                            topic_title_raw = lines[0]
+                            topic_title = topic_title_raw.replace('|', '').strip()
+                            topic_title = re.sub(r'\s{2,}', ' ', topic_title)
+                            if not topic_title:
+                                topic_title = "Untitled Concept"
+                            
+                            # Clean content
+                            clines = []
+                            for line in lines[1:]:
+                                if line.strip().startswith('|') or line.strip().endswith('|'):
+                                    line = line.replace('|', '')
+                                    line = re.sub(r'\s{2,}', ' ', line)
+                                clines.append(line.strip())
+                            concept_content = '\n'.join(clines).strip()
+                            
+                            if concept_content:
+                                concept = Concept(
+                                    topic_id=topic.id,
+                                    name=topic_title[:100],
+                                    description=f"Study material for {topic_title[:50]}",
+                                    content=concept_content[:50000],
+                                    difficulty=2,
+                                    importance=3,
+                                    estimated_time_minutes=30,
+                                    order_index=0
+                                )
+                                session.add(concept)
+                await session.flush()
+                print("✅ Added parsed materials to database")
+
         # ── SEED STUDENT PROFILES ────────────────────────────────────────
         profiles_created = 0
         for user in users:
