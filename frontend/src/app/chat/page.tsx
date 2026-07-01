@@ -65,7 +65,7 @@ export default function ChatPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-5xl mx-auto flex flex-col h-[calc(100vh-4rem)] p-4 sm:p-6 animate-fade-in">
+      <div className="max-w-7xl w-full mx-auto flex flex-col h-[calc(100vh-4rem)] p-4 sm:p-6 animate-fade-in">
         <div className="mb-4 text-center">
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-[image:var(--gradient-primary)] inline-block">
             AI Study Tutor
