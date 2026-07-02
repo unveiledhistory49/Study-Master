@@ -13,23 +13,9 @@ export default function ChatMessage({ message }: { message: ChatMessageType }) {
   // so remark-math can detect them. The AI often outputs bare LaTeX without $ wrappers.
   const processContent = (text: string): string => {
     // Wrap \(...\) in $...$ (inline math)
-    let result = text.replace(/\\\((.+?)\\\)/g, (_, expr) => `$${expr}$`);
+    let result = text.replace(/\\\(([\s\S]+?)\\\)/g, (_, expr) => `$${expr}$`);
     // Wrap \[...\] in $$...$$ (display math)
-    result = result.replace(/\\\[(.+?)\\\]/gs, (_, expr) => `$$${expr}$$`);
-    // Detect bare LaTeX commands not inside $ delimiters and wrap them
-    // Match patterns like: F = \dfrac{...}{...} or \sqrt{...} etc.
-    result = result.replace(
-      /(?<!\$)(\b[A-Za-z_]\w*\s*=\s*)?\\(dfrac|frac|sqrt|text|displaystyle|tfrac|sin|cos|tan|log|ln|int|sum|prod|pi|theta|omega|alpha|beta|gamma|delta|Delta|tau|phi|mu|lambda|sigma|epsilon|propto)\b/g,
-      (match, prefix, _cmd, offset) => {
-        // Check if already inside $ delimiters
-        const before = result.substring(Math.max(0, offset - 5), offset);
-        if (before.includes('$')) return match;
-        
-        // Find the extent of this math expression by looking for the end
-        // We'll let the broader regex below handle full wrapping
-        return match;
-      }
-    );
+    result = result.replace(/\\\[([\s\S]+?)\\\]/g, (_, expr) => `$$${expr}$$`);
     
     // Wrap parenthesized expressions containing LaTeX commands: (F = \dfrac{...}{...})
     result = result.replace(
