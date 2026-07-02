@@ -9,6 +9,11 @@ import QuizModal from '@/components/QuizModal';
 import { api } from '@/lib/api';
 import { Concept, Topic, Subject } from '@/lib/types';
 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+
 export default function ConceptPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const router = useRouter();
@@ -16,6 +21,7 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
   const [topic, setTopic] = useState<Topic | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [isMastered, setIsMastered] = useState(false);
 
@@ -44,6 +50,32 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
     fetchConcept();
   }, [unwrappedParams.id]);
 
+  const handleGenerateMaterial = async () => {
+    setIsGenerating(true);
+    try {
+      const updatedConcept = await api.generateMaterial(concept!.id);
+      setConcept(updatedConcept);
+    } catch (err) {
+      console.error('Failed to generate material:', err);
+      alert('Failed to generate material. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadNotes = () => {
+    if (!concept?.content) return;
+    const blob = new Blob([concept.content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${concept.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_notes.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleQuizComplete = async (passed: boolean) => {
     setIsQuizOpen(false);
     if (passed) {
@@ -55,6 +87,17 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
         console.error('Failed to update mastery:', err);
       }
     }
+  };
+
+  // Pre-process content for markdown math (same logic as ChatMessage)
+  const processContent = (text: string): string => {
+    let result = text.replace(/\\\(([\s\S]+?)\\\)/g, (_, expr) => `$${expr}$`);
+    result = result.replace(/\\\[([\s\S]+?)\\\]/g, (_, expr) => `$$${expr}$$`);
+    result = result.replace(
+      /\(([^)]*\\(?:dfrac|frac|sqrt|text|displaystyle|tfrac|sin|cos|tan|log|ln|int|sum|prod|pi|theta|omega|alpha|beta|gamma|delta|Delta|tau|phi|mu|lambda|sigma|epsilon|propto)[^)]*)\)/g,
+      (_, expr) => `$${expr}$`
+    );
+    return result;
   };
 
   if (isLoading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
@@ -108,11 +151,54 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
             {concept.description}
           </p>
 
-          <div className="prose prose-invert max-w-none mb-10">
-            <h3 className="text-xl font-semibold mb-4 text-[var(--text-primary)] border-b border-[var(--border)] pb-2">Content</h3>
-            <div className="whitespace-pre-wrap text-[var(--text-secondary)] leading-loose">
-              {concept.content}
+          <div className="prose prose-invert max-w-none mb-10 relative">
+            <div className="flex justify-between items-center mb-4 border-b border-[var(--border)] pb-2">
+              <h3 className="text-xl font-semibold text-[var(--text-primary)] m-0">Content</h3>
+              {concept.content && (
+                <button 
+                  onClick={handleDownloadNotes}
+                  className="text-sm px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border)] rounded-md transition-colors"
+                >
+                  Download Markdown
+                </button>
+              )}
             </div>
+            
+            {concept.content ? (
+              <div className="chat-markdown text-[var(--text-secondary)] leading-loose">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                >
+                  {processContent(concept.content)}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)]">
+                <div className="text-4xl mb-4">📚</div>
+                <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">No learning material yet</h3>
+                <p className="text-[var(--text-muted)] mb-6 max-w-md mx-auto">
+                  Click the button below to instantly generate an exhaustive, custom-tailored study guide for this topic.
+                </p>
+                <button 
+                  onClick={handleGenerateMaterial} 
+                  disabled={isGenerating}
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Generating Material...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                      Generate Study Material
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           {concept.prerequisites && (
@@ -126,36 +212,32 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-10 pt-6 border-t border-[var(--border)]">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <span className="text-sm text-[var(--text-muted)]">Status:</span>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                isMastered || concept.mastery_status === 'Mastered' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                concept.mastery_status === 'In progress' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                'bg-slate-500/10 text-slate-400 border-slate-500/20'
-              }`}>
-                {isMastered ? 'Mastered' : concept.mastery_status}
-              </span>
-            </div>
-            
-            <div className="flex gap-4 w-full sm:w-auto">
-              {concept.quiz_data ? (
+          {concept.content && (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-10 pt-6 border-t border-[var(--border)]">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <span className="text-sm text-[var(--text-muted)]">Status:</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
+                  isMastered || concept.mastery_status === 'Mastered' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                  concept.mastery_status === 'In progress' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                  'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                }`}>
+                  {isMastered ? 'Mastered' : concept.mastery_status}
+                </span>
+              </div>
+              
+              <div className="flex gap-4 w-full sm:w-auto">
                 <button 
                   onClick={() => setIsQuizOpen(true)} 
-                  className="btn-secondary flex-1 sm:flex-none border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-400 text-[var(--text-primary)]"
+                  className="btn-primary flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20"
                 >
-                  Take Concept Quiz
+                  Done Studying (Take Quiz)
                 </button>
-              ) : (
-                <button className="btn-secondary flex-1 sm:flex-none opacity-50 cursor-not-allowed">
-                  No Quiz Available
+                <button onClick={() => router.push(`/chat?concept_id=${concept.id}`)} className="btn-secondary flex-1 sm:flex-none flex items-center justify-center gap-2 text-[var(--text-primary)]">
+                  <span>💬</span> Discuss with AI
                 </button>
-              )}
-              <button onClick={() => router.push('/chat')} className="btn-primary flex-1 sm:flex-none flex items-center justify-center gap-2">
-                <span>💬</span> Discuss with AI
-              </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
       {concept.quiz_data && (

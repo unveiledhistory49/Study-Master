@@ -72,6 +72,7 @@ export const api = {
   getTopic: (id: string | number) => fetchWithAuth(`/topics/${id}`),
   
   getConcept: (id: string | number) => fetchWithAuth(`/concepts/${id}`),
+  generateMaterial: (id: string | number) => fetchWithAuth(`/concepts/${id}/generate-material`, { method: 'POST' }),
   
   getProfiles: () => fetchWithAuth('/profile'),
   
