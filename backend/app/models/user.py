@@ -17,4 +17,5 @@ class User(Base):
     # Relationships
     profiles = relationship("StudentProfile", back_populates="user", lazy="selectin")
     sessions = relationship("StudySession", back_populates="user", lazy="selectin")
+    conversations = relationship("Conversation", lazy="selectin")
     messages = relationship("ChatMessage", back_populates="user", lazy="selectin")

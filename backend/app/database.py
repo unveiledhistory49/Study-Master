@@ -41,10 +41,17 @@ async def init_db():
     """Create all tables in the database."""
     from app.models import (
         User, Subject, Topic, Concept, ConceptPrerequisite,
-        StudentProfile, StudySession, ChatMessage,
+        StudentProfile, StudySession, ChatMessage, Conversation
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        try:
+            from sqlalchemy import text
+            # Add conversation_id to chat_messages if it doesn't exist. Ignored if it already exists or if using sqlite (since sqlite syntax varies)
+            if not str(engine.url).startswith("sqlite"):
+                await conn.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE;"))
+        except Exception:
+            pass
 
 
 async def close_db():

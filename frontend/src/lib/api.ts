@@ -75,13 +75,21 @@ export const api = {
   
   getProfiles: () => fetchWithAuth('/profile'),
   
-  chat: (data: { message: string, subject_id?: number, concept_id?: number }) =>
+  chat: (data: { message: string, subject_id?: number, concept_id?: number, conversation_id?: number }) =>
     fetchWithAuth('/ai/chat', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
     
-  getChatHistory: () => fetchWithAuth('/ai/chat/history'),
+  getChatHistory: (conversation_id?: number) => {
+    const query = conversation_id ? `?conversation_id=${conversation_id}` : '';
+    return fetchWithAuth(`/ai/chat/history${query}`);
+  },
+
+  getConversations: () => fetchWithAuth('/ai/conversations'),
+  
+  deleteConversation: (conversation_id: number) =>
+    fetchWithAuth(`/ai/conversations/${conversation_id}`, { method: 'DELETE' }),
     
   updateMastery: (concept_id: string | number, passed: boolean) =>
     fetchWithAuth(`/profile/mastery/${concept_id}`, {

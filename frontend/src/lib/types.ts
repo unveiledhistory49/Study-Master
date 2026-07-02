@@ -55,4 +55,11 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  conversation_id?: number;
+}
+
+export interface Conversation {
+  id: number;
+  title: string;
+  created_at: string;
 }

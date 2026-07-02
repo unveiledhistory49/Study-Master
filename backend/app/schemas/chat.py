@@ -6,6 +6,7 @@ class ChatRequest(BaseModel):
     message: str
     subject_id: int | None = None
     concept_id: int | None = None
+    conversation_id: int | None = None
 
 
 class ChatResponse(BaseModel):
@@ -14,6 +15,7 @@ class ChatResponse(BaseModel):
     content: str
     subject_id: int | None = None
     concept_id: int | None = None
+    conversation_id: int | None = None
     created_at: datetime
 
     class Config:
@@ -23,3 +25,12 @@ class ChatResponse(BaseModel):
 class ChatMessagePair(BaseModel):
     user_message: ChatResponse
     assistant_message: ChatResponse
+
+
+class ConversationResponse(BaseModel):
+    id: int
+    title: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
