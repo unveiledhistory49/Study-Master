@@ -23,7 +23,7 @@ You are patient, encouraging, and always aim to build the student's confidence w
 
 
 class AIService:
-    """Client for NVIDIA NIM API with DeepSeek model using OpenAI client."""
+    """Client for NVIDIA NIM API with GPT-OSS-120B using OpenAI client."""
 
     def __init__(self):
         self.api_key = settings.NVIDIA_API_KEY
@@ -34,7 +34,7 @@ class AIService:
         self.client = AsyncOpenAI(
             base_url=self.api_url,
             api_key=self.api_key,
-            timeout=60.0,
+            timeout=120.0,
         )
 
     async def chat(
@@ -69,24 +69,18 @@ class AIService:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=1.0,
-                top_p=0.95,
-                max_tokens=8192,
-                extra_body={"chat_template_kwargs":{"thinking":True,"reasoning_effort":"high"}},
+                temperature=1,
+                top_p=1,
+                max_tokens=4096,
                 stream=False
             )
 
             content = response.choices[0].message.content or ""
             
-            # If it's a reasoning model, the answer might be in reasoning or reasoning_content
-            reasoning = getattr(response.choices[0].message, "reasoning", None) or getattr(response.choices[0].message, "reasoning_content", None)
+            # GPT-OSS-120B may include reasoning_content
+            reasoning = getattr(response.choices[0].message, "reasoning_content", None)
             
-            # Some models put thinking in <think> tags inside content
-            if "<think>" in content:
-                import re
-                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
-                
-            # If content is empty but reasoning exists, return reasoning (or a mix)
+            # If content is empty but reasoning exists, use reasoning
             if not content and reasoning:
                 content = reasoning.strip()
                 
