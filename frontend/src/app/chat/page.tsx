@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ChatMessage from '@/components/ChatMessage';
 import { api } from '@/lib/api';
 import { ChatMessage as ChatMessageType, Conversation } from '@/lib/types';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
-export default function ChatPage() {
+function ChatPageContent() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
   
@@ -97,6 +99,14 @@ export default function ChatPage() {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
+  const searchParams = useSearchParams();
+  const initialConceptId = searchParams.get('concept_id');
+  const [conceptId, setConceptId] = useState<number | null>(initialConceptId ? parseInt(initialConceptId) : null);
+
+  // When a new conversation is selected, reset concept_id if it's not the one we just started
+  // Or better, just let the backend track concept_id for the conversation.
+  // Actually, for the first message of a new chat initiated from a concept page, we should send concept_id.
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -114,7 +124,8 @@ export default function ChatPage() {
     try {
       const response = await api.chat({ 
         message: userMessage.content,
-        conversation_id: selectedConversationId || undefined
+        conversation_id: selectedConversationId || undefined,
+        concept_id: conceptId || undefined
       });
       
       const assistantMessage: ChatMessageType = {
@@ -130,6 +141,10 @@ export default function ChatPage() {
         setSelectedConversationId(response.user_message.conversation_id);
         fetchConversations();
       }
+      
+      // If we successfully sent the concept_id in the first message of this conversation,
+      // we don't necessarily need to keep sending it (the backend saves it on the conversation/messages),
+      // but it doesn't hurt.
     } catch (error) {
       console.error('Chat error:', error);
       const errorMessage: ChatMessageType = {
@@ -288,5 +303,13 @@ export default function ChatPage() {
         </div>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <ChatPageContent />
+    </Suspense>
   );
 }
