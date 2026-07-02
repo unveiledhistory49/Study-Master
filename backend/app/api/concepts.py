@@ -127,8 +127,9 @@ Produce the material in this order:
 - Do not include meta-commentary about being an AI or about the prompt itself — output only the finished learning material, starting directly with the Overview section."""
 
     try:
+        from app.config import settings
         completion = await client.chat.completions.create(
-            model="openai/gpt-4o-mini",
+            model=settings.NVIDIA_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             top_p=1,
