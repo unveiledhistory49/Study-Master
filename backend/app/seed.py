@@ -86,66 +86,125 @@ CELL_QUIZ = {
 
 BIOLOGY_TOPICS = [
     {
-        "name": "WAEC/UTME Biology Syllabus",
-        "description": "Complete biology curriculum divided into core thematic concepts.",
+        "name": "Foundations of Biology",
+        "description": "Characteristics of living organisms and how to identify them, and cellular organization",
         "concepts": [
-            {
-                "name": "Foundations of Biology",
-                "description": "Recognising Living Things, Classification of Living Things, Organisation of Life, The Cell, The Cell and Its Environment, Some Properties and Functions of the Cell",
-                "difficulty": 2, "importance": 5, "utme_weight": 3.0, "time": 45,
-                "content": CELL_CONTENT, "quiz_data": CELL_QUIZ
-            },
-            {
-                "name": "Nutrition & Feeding",
-                "description": "Plant Nutrition, Animal Nutrition, Modes of Nutrition, Feeding Mechanisms in Holozoic Organisms, Digestive System",
-                "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 40
-            },
-            {
-                "name": "Support & Body Systems (Physiology)",
-                "description": "Supporting Tissues and Systems, Transport System, Respiratory System, Excretory System, Regulation of Internal Environment (Homeostasis), Hormonal Co-ordination, Nervous Co-ordination, Sense Organs",
-                "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 50
-            },
-            {
-                "name": "Reproduction & Development",
-                "description": "Reproduction in Unicellular Organisms and Invertebrates, Reproductive Systems in Vertebrates, Reproductive Systems in Plants, Pollination in Plants, Reproductive Behaviours (Courtship), Reproductive System and Reproduction in Humans, Development of New Seeds, Fruits",
-                "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 50
-            },
-            {
-                "name": "Genetics & Evolution",
-                "description": "Variation in Population, Biology of Heredity, Evolution",
-                "difficulty": 4, "importance": 5, "utme_weight": 4.5, "time": 45
-            },
-            {
-                "name": "Classification of Plants",
-                "description": "Classification of Plants",
-                "difficulty": 3, "importance": 3, "utme_weight": 2.5, "time": 30
-            },
-            {
-                "name": "Ecology & Ecosystems",
-                "description": "Basic Ecological Concepts, Functioning Ecosystem – Autotrophy and Heterotrophy, Functioning Ecosystem – Food Chains/Webs/Trophic Levels, Energy Transformation in Nature, Nutrient Cycling in Nature, Ecology of Population, Balance in Nature",
-                "difficulty": 3, "importance": 4, "utme_weight": 3.5, "time": 45
-            },
-            {
-                "name": "Habitats",
-                "description": "Aquatic Habitat – Marine, Estuarine, Freshwater; Terrestrial Habitat – Marsh, Forest, Grassland, Arid Lands",
-                "difficulty": 2, "importance": 3, "utme_weight": 2.5, "time": 35
-            },
-            {
-                "name": "Ecological Management & Conservation",
-                "description": "Association, Tolerance, Adaptation, Pollution, Conservation of Natural Resources",
-                "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 35
-            },
-            {
-                "name": "Microorganisms & Health",
-                "description": "Micro-organisms Around Us, Micro-organisms in Action, Towards Better Health",
-                "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 35
-            },
-            {
-                "name": "Biology & Agriculture",
-                "description": "Relevance of Biology to Agriculture, Pests and Diseases of Crops",
-                "difficulty": 2, "importance": 3, "utme_weight": 2.5, "time": 30
-            }
-        ]
+            {"name": "Recognising Living Things", "description": "Characteristics of living organisms and how to identify them", "difficulty": 1, "importance": 4, "utme_weight": 2.0, "time": 20},
+            {"name": "Classification of Living Things", "description": "Taxonomy, systematic grouping, and the kingdoms of life", "difficulty": 2, "importance": 5, "utme_weight": 3.0, "time": 30},
+            {"name": "Organisation of Life", "description": "Levels of organization from cells to biosphere", "difficulty": 1, "importance": 3, "utme_weight": 2.0, "time": 15},
+            {"name": "The Cell", "description": "Structure, organelles, and types of cells", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 45, "content": CELL_CONTENT, "quiz_data": CELL_QUIZ},
+            {"name": "The Cell and Its Environment", "description": "Osmosis, diffusion, and active transport", "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 25},
+            {"name": "Some Properties and Functions of the Cell", "description": "Cellular respiration, growth, and cell division", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 40},
+        ],
+    },
+    {
+        "name": "Nutrition & Feeding",
+        "description": "How organisms obtain and process food for energy and growth",
+        "concepts": [
+            {"name": "Plant Nutrition", "description": "Photosynthesis, mineral requirements, and autotrophic processes", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 40},
+            {"name": "Animal Nutrition", "description": "Classes of food, balanced diet, and dietary requirements", "difficulty": 2, "importance": 5, "utme_weight": 3.5, "time": 30},
+            {"name": "Modes of Nutrition", "description": "Autotrophic, heterotrophic, saprophytic, and parasitic nutrition", "difficulty": 2, "importance": 4, "utme_weight": 2.5, "time": 25},
+            {"name": "Feeding Mechanisms in Holozoic Organisms", "description": "Dentition, filter feeding, fluid feeding, and adaptations", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Digestive System", "description": "Human alimentary canal, digestion, absorption, and assimilation", "difficulty": 3, "importance": 5, "utme_weight": 3.5, "time": 35},
+        ],
+    },
+    {
+        "name": "Support & Body Systems (Physiology)",
+        "description": "Internal systems for support, transport, excretion, and coordination",
+        "concepts": [
+            {"name": "Supporting Tissues and Systems", "description": "Skeletal systems, bone, cartilage, and plant supporting tissues", "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 30},
+            {"name": "Transport System", "description": "Circulatory systems, blood, heart, and plant vascular systems", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 40},
+            {"name": "Respiratory System", "description": "Gaseous exchange mechanisms in plants and animals", "difficulty": 2, "importance": 4, "utme_weight": 3.5, "time": 30},
+            {"name": "Excretory System", "description": "Kidneys, nephrons, and removal of metabolic wastes", "difficulty": 3, "importance": 5, "utme_weight": 3.5, "time": 35},
+            {"name": "Regulation of Internal Environment (Homeostasis)", "description": "Liver, kidney functions, and temperature regulation", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 35},
+            {"name": "Hormonal Co-ordination", "description": "Endocrine glands, plant hormones, and feedback mechanisms", "difficulty": 3, "importance": 5, "utme_weight": 3.5, "time": 35},
+            {"name": "Nervous Co-ordination", "description": "CNS, PNS, reflex actions, and nerve impulses", "difficulty": 4, "importance": 5, "utme_weight": 4.0, "time": 45},
+            {"name": "Sense Organs", "description": "Structure and functions of the eye, ear, and skin", "difficulty": 3, "importance": 4, "utme_weight": 3.0, "time": 35},
+        ],
+    },
+    {
+        "name": "Reproduction & Development",
+        "description": "Methods of perpetuating life in plants and animals",
+        "concepts": [
+            {"name": "Reproduction in Unicellular Organisms and Invertebrates", "description": "Asexual reproduction, binary fission, and budding", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Reproductive Systems in Vertebrates", "description": "Male and female reproductive organs in vertebrates", "difficulty": 3, "importance": 4, "utme_weight": 3.0, "time": 30},
+            {"name": "Reproductive Systems in Plants", "description": "Flower structure and functions of floral parts", "difficulty": 3, "importance": 5, "utme_weight": 3.5, "time": 35},
+            {"name": "Pollination in Plants", "description": "Types, agents of pollination, and adaptations", "difficulty": 2, "importance": 4, "utme_weight": 2.5, "time": 25},
+            {"name": "Reproductive Behaviours (Courtship)", "description": "Territoriality, display, pairing, and seasonal migrations", "difficulty": 1, "importance": 2, "utme_weight": 1.5, "time": 15},
+            {"name": "Reproductive System and Reproduction in Humans", "description": "Gametogenesis, fertilization, pregnancy, and birth", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 40},
+            {"name": "Development of New Seeds", "description": "Seed structure, dormancy, and germination conditions", "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 25},
+            {"name": "Fruits", "description": "Types of fruits, dispersal mechanisms, and adaptations", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+        ],
+    },
+    {
+        "name": "Genetics & Evolution",
+        "description": "Heredity, variation, and the evolutionary history of life",
+        "concepts": [
+            {"name": "Variation in Population", "description": "Morphological, physiological variation, and blood groups", "difficulty": 3, "importance": 4, "utme_weight": 3.0, "time": 30},
+            {"name": "Biology of Heredity", "description": "Mendelian genetics, chromosomes, genes, and probability", "difficulty": 4, "importance": 5, "utme_weight": 5.0, "time": 50},
+            {"name": "Evolution", "description": "Theories of evolution, evidence, and natural selection", "difficulty": 3, "importance": 4, "utme_weight": 3.5, "time": 35},
+        ],
+    },
+    {
+        "name": "Classification of Plants",
+        "description": "Classification of Plants",
+        "concepts": [
+            {"name": "Classification of Plants", "description": "Thallophytes, bryophytes, pteridophytes, and spermatophytes", "difficulty": 3, "importance": 4, "utme_weight": 3.0, "time": 35},
+        ],
+    },
+    {
+        "name": "Ecology & Ecosystems",
+        "description": "Interactions between organisms and their environments",
+        "concepts": [
+            {"name": "Basic Ecological Concepts", "description": "Biosphere, habitat, niche, population, and community", "difficulty": 2, "importance": 4, "utme_weight": 2.5, "time": 20},
+            {"name": "Functioning Ecosystem – Autotrophy and Heterotrophy", "description": "Producers, consumers, and decomposers", "difficulty": 2, "importance": 4, "utme_weight": 2.5, "time": 20},
+            {"name": "Functioning Ecosystem – Food Chains/Webs/Trophic Levels", "description": "Energy flow, food chains, webs, and ecological pyramids", "difficulty": 2, "importance": 5, "utme_weight": 3.5, "time": 30},
+            {"name": "Energy Transformation in Nature", "description": "Solar energy conversion, energy loss at trophic levels", "difficulty": 3, "importance": 4, "utme_weight": 3.0, "time": 25},
+            {"name": "Nutrient Cycling in Nature", "description": "Carbon, nitrogen, and water cycles", "difficulty": 3, "importance": 5, "utme_weight": 3.5, "time": 35},
+            {"name": "Ecology of Population", "description": "Population dynamics, growth curves, and factors affecting size", "difficulty": 3, "importance": 4, "utme_weight": 3.0, "time": 30},
+            {"name": "Balance in Nature", "description": "Dynamic equilibrium and ecological succession", "difficulty": 3, "importance": 3, "utme_weight": 2.5, "time": 25},
+        ],
+    },
+    {
+        "name": "Habitats",
+        "description": "Various environments where organisms live and their characteristics",
+        "concepts": [
+            {"name": "Aquatic Habitat – Marine", "description": "Characteristics of oceans, zonation, and adaptive features", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Aquatic Habitat – Estuarine", "description": "Brackish water conditions and specialized adaptations", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Aquatic Habitat – Freshwater", "description": "Lakes, rivers, ponds, and freshwater adaptations", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Terrestrial Habitat – Marsh", "description": "Characteristics of marshes and swamps", "difficulty": 2, "importance": 2, "utme_weight": 1.5, "time": 15},
+            {"name": "Terrestrial Habitat – Forest", "description": "Tropical rainforests, strata, and biodiversity", "difficulty": 2, "importance": 4, "utme_weight": 2.5, "time": 25},
+            {"name": "Terrestrial Habitat – Grassland", "description": "Savannas, fire climax, and specialized flora/fauna", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Terrestrial Habitat – Arid Lands", "description": "Deserts, xerophytes, and water conservation adaptations", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+        ],
+    },
+    {
+        "name": "Ecological Management & Conservation",
+        "description": "Human impact on the environment and resource preservation",
+        "concepts": [
+            {"name": "Association", "description": "Symbiosis, parasitism, commensalism, and mutualism", "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 25},
+            {"name": "Tolerance", "description": "Minimum and maximum limits of tolerance, limiting factors", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Adaptation", "description": "Structural, physiological, and behavioral adaptations", "difficulty": 3, "importance": 5, "utme_weight": 3.5, "time": 30},
+            {"name": "Pollution", "description": "Air, water, soil, noise pollution, and their control", "difficulty": 2, "importance": 5, "utme_weight": 3.5, "time": 30},
+            {"name": "Conservation of Natural Resources", "description": "Need for conservation, agencies, and methods", "difficulty": 2, "importance": 4, "utme_weight": 2.5, "time": 25},
+        ],
+    },
+    {
+        "name": "Microorganisms & Health",
+        "description": "Role of microorganisms in nature and their effect on human health",
+        "concepts": [
+            {"name": "Micro-organisms Around Us", "description": "Types, carriers, and habitats of microorganisms", "difficulty": 2, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Micro-organisms in Action", "description": "Beneficial and harmful effects, putrefaction, and fermentation", "difficulty": 2, "importance": 4, "utme_weight": 2.5, "time": 25},
+            {"name": "Towards Better Health", "description": "Control of vectors, hygiene, immunity, and immunization", "difficulty": 2, "importance": 5, "utme_weight": 3.0, "time": 25},
+        ],
+    },
+    {
+        "name": "Biology & Agriculture",
+        "description": "Application of biological principles to agriculture",
+        "concepts": [
+            {"name": "Relevance of Biology to Agriculture", "description": "Classification of plants/animals, food production", "difficulty": 1, "importance": 3, "utme_weight": 2.0, "time": 20},
+            {"name": "Pests and Diseases of Crops", "description": "Major crop pests, diseases, their effects, and control methods", "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 25},
+        ],
     }
 ]
 
@@ -450,58 +509,7 @@ async def seed_database():
 
         print(f"✅ Created {total_topics} topics and {total_concepts} concepts")
 
-        # ── PARSE ACTUAL MATERIALS ───────────────────────────────────────
-        import os, re
-        print("📖 Parsing biology materials from markdown...")
-        materials_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'materials', 'markdown')
-        if os.path.exists(materials_dir):
-            biology_files = [f for f in os.listdir(materials_dir) if 'BIOLOGY' in f.upper() and f.endswith('.md')]
-            biology_subject = subject_map.get("Biology")
-            if biology_subject:
-                for file in biology_files:
-                    filepath = os.path.join(materials_dir, file)
-                    with open(filepath, 'r') as f:
-                        content = f.read()
-                    
-                    parts = re.split(r'TOPIC:\s*', content)
-                    if len(parts) > 1:
-                        topic_name = file.replace('.md', '').strip()[:100]
-                        topic = Topic(name=topic_name, description=f"Notes from {topic_name}", subject_id=biology_subject.id, order_index=total_topics)
-                        session.add(topic)
-                        await session.flush()
-                        total_topics += 1
-                        
-                        for part in parts[1:]:
-                            lines = part.split('\n')
-                            topic_title_raw = lines[0]
-                            topic_title = topic_title_raw.replace('|', '').strip()
-                            topic_title = re.sub(r'\s{2,}', ' ', topic_title)
-                            if not topic_title:
-                                topic_title = "Untitled Concept"
-                            
-                            # Clean content
-                            clines = []
-                            for line in lines[1:]:
-                                if line.strip().startswith('|') or line.strip().endswith('|'):
-                                    line = line.replace('|', '')
-                                    line = re.sub(r'\s{2,}', ' ', line)
-                                clines.append(line.strip())
-                            concept_content = '\n'.join(clines).strip()
-                            
-                            if concept_content:
-                                concept = Concept(
-                                    topic_id=topic.id,
-                                    name=topic_title[:100],
-                                    description=f"Study material for {topic_title[:50]}",
-                                    content=concept_content[:50000],
-                                    difficulty=2,
-                                    importance=3,
-                                    estimated_time_minutes=30,
-                                    order_index=0
-                                )
-                                session.add(concept)
-                await session.flush()
-                print("✅ Added parsed materials to database")
+        print("✅ Added parsed materials to database skipped.")
 
         # ── SEED STUDENT PROFILES ────────────────────────────────────────
         profiles_created = 0
