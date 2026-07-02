@@ -428,22 +428,27 @@ async def seed_database():
     print("✅ Database tables created.")
 
     async with async_session() as session:
-        # Check if already seeded
-        result = await session.execute(select(func.count(User.id)))
-        user_count = result.scalar()
-        if user_count and user_count > 0:
-            print("⚠️  Database already seeded. Skipping...")
+        # Check if already seeded (based on subjects rather than users, so manual user signups don't block seeding)
+        from app.models.subject import Subject
+        result = await session.execute(select(func.count(Subject.id)))
+        subject_count = result.scalar()
+        if subject_count and subject_count > 0:
+            print("⚠️  Database already seeded with subjects. Skipping...")
             return
 
         # ── SEED USERS ───────────────────────────────────────────────────
         users = []
         for user_data in USERS:
-            user = User(
-                username=user_data["username"],
-                password_hash=hash_password(user_data["password"]),
-                role=user_data["role"],
-            )
-            session.add(user)
+            # Check if user already exists
+            existing = await session.execute(select(User).where(User.username == user_data["username"]))
+            user = existing.scalar_one_or_none()
+            if not user:
+                user = User(
+                    username=user_data["username"],
+                    password_hash=hash_password(user_data["password"]),
+                    role=user_data["role"],
+                )
+                session.add(user)
             users.append(user)
         await session.flush()
         print(f"✅ Created {len(users)} users: {', '.join(u.username for u in users)}")

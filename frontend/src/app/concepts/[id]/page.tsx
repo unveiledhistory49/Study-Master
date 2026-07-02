@@ -21,7 +21,6 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
   const [subject, setSubject] = useState<Subject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isMastered, setIsMastered] = useState(false);
 
   useEffect(() => {
     const fetchConcept = async () => {
@@ -202,11 +201,11 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <span className="text-sm text-[var(--text-muted)]">Status:</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                  isMastered || concept.mastery_status === 'Mastered' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                  concept.mastery_status === 'Mastered' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                   concept.mastery_status === 'In progress' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                   'bg-slate-500/10 text-slate-400 border-slate-500/20'
                 }`}>
-                  {isMastered ? 'Mastered' : concept.mastery_status}
+                  {concept.mastery_status}
                 </span>
               </div>
               

@@ -48,6 +48,7 @@ export default function InlineQuiz({
       }, 1000);
     }
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started, submitted, timeLeft]);
 
   const handleSelect = (qIndex: number, optIndex: number) => {

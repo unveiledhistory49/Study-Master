@@ -33,11 +33,6 @@ function ChatPageContent() {
     scrollToBottom();
   }, [messages]);
 
-  // Load conversations on mount
-  useEffect(() => {
-    fetchConversations();
-  }, []);
-
   // When selected conversation changes, fetch its history
   useEffect(() => {
     const fetchHistory = async () => {
@@ -72,6 +67,12 @@ function ChatPageContent() {
     }
   };
 
+  // Load conversations on mount
+  useEffect(() => {
+    fetchConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleNewChat = () => {
     setSelectedConversationId(null);
     setMessages([{
@@ -103,7 +104,7 @@ function ChatPageContent() {
   const searchParams = useSearchParams();
   const initialConceptId = searchParams.get('concept_id');
   const startQuizParam = searchParams.get('start_quiz');
-  const [conceptId, setConceptId] = useState<number | null>(initialConceptId ? parseInt(initialConceptId) : null);
+  const [conceptId] = useState<number | null>(initialConceptId ? parseInt(initialConceptId) : null);
   const hasTriggeredQuizRef = useRef(false);
 
   // When a new conversation is selected, reset concept_id if it's not the one we just started
@@ -120,6 +121,7 @@ function ChatPageContent() {
         sendMessage("I'm done studying. Give me a quiz to test my knowledge!");
       }, 500);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startQuizParam, conceptId]);
   
   const sendMessage = async (messageText: string) => {

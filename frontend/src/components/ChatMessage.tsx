@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { ChatMessage as ChatMessageType } from '@/lib/types';
-import InlineQuiz, { QuizSubmission } from './InlineQuiz';
+import InlineQuiz from './InlineQuiz';
 
 export default function ChatMessage({ 
   message, 
@@ -34,9 +34,8 @@ export default function ChatMessage({
   
   // Custom renderer for code blocks to detect our JSON quiz
   const renderers = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     code({ node, inline, className, children, ...props }: any) {
-      const match = /language-(\w+)/.exec(className || '');
-      const language = match ? match[1] : '';
       const isQuiz = className?.includes('language-json') && String(children).includes('"questions"');
       
       if (!inline && isQuiz) {
