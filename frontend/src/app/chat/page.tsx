@@ -11,6 +11,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 function ChatPageContent() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const [quizPassStreak, setQuizPassStreak] = useState(0);
   
   const [messages, setMessages] = useState<ChatMessageType[]>([
     {
@@ -107,18 +108,16 @@ function ChatPageContent() {
   // Or better, just let the backend track concept_id for the conversation.
   // Actually, for the first message of a new chat initiated from a concept page, we should send concept_id.
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
+  const sendMessage = async (messageText: string) => {
+    if (isLoading) return;
+    
     const userMessage: ChatMessageType = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim()
+      content: messageText
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setInput('');
     setIsLoading(true);
 
     try {
@@ -136,15 +135,10 @@ function ChatPageContent() {
       
       setMessages(prev => [...prev, assistantMessage]);
       
-      // If it was a new chat, refresh conversations to show the new one
       if (!selectedConversationId && response.user_message?.conversation_id) {
         setSelectedConversationId(response.user_message.conversation_id);
         fetchConversations();
       }
-      
-      // If we successfully sent the concept_id in the first message of this conversation,
-      // we don't necessarily need to keep sending it (the backend saves it on the conversation/messages),
-      // but it doesn't hurt.
     } catch (error) {
       console.error('Chat error:', error);
       const errorMessage: ChatMessageType = {
@@ -156,6 +150,14 @@ function ChatPageContent() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    const text = input.trim();
+    setInput('');
+    await sendMessage(text);
   };
 
   return (
@@ -256,7 +258,13 @@ function ChatPageContent() {
             
             <div className={`${!selectedConversationId && messages.length === 1 ? 'hidden' : 'block'}`}>
               {messages.map(msg => (
-                <ChatMessage key={msg.id} message={msg} />
+                <ChatMessage 
+                  key={msg.id} 
+                  message={msg} 
+                  onSendContextMessage={sendMessage} 
+                  quizPassStreak={quizPassStreak}
+                  onUpdateStreak={(newStreak) => setQuizPassStreak(newStreak)}
+                />
               ))}
               {isLoading && (
                 <div className="flex justify-start mb-8 animate-fade-in">
