@@ -3,12 +3,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.concept import Concept
+from app.models.topic import Topic
 from app.models.user import User
 from app.schemas.concept import ConceptDetail, ConceptPrerequisiteBrief
 from app.services.auth_service import get_current_user
 
 router = APIRouter(prefix="/api/concepts", tags=["concepts"])
 
+
+from sqlalchemy.orm import selectinload
 
 @router.get("/{concept_id}", response_model=ConceptDetail)
 async def get_concept(
@@ -17,7 +20,14 @@ async def get_concept(
     db: AsyncSession = Depends(get_db),
 ):
     """Get concept detail with prerequisites."""
-    result = await db.execute(select(Concept).where(Concept.id == concept_id))
+    result = await db.execute(
+        select(Concept)
+        .options(
+            selectinload(Concept.prerequisites),
+            selectinload(Concept.topic).selectinload(Topic.subject)
+        )
+        .where(Concept.id == concept_id)
+    )
     concept = result.scalar_one_or_none()
     if concept is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Concept not found")
