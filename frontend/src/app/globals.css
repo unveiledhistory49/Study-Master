@@ -151,6 +151,10 @@
   padding: 0.75em 1em;
   margin: 0.75em 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.chat-markdown pre::-webkit-scrollbar {
+  display: none;
 }
 .chat-markdown pre code {
   background: none;
@@ -170,6 +174,12 @@
   border-collapse: collapse;
   margin: 0.75em 0;
   font-size: 0.9em;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.chat-markdown table::-webkit-scrollbar {
+  display: none;
 }
 .chat-markdown th, .chat-markdown td {
   border: 1px solid var(--border);

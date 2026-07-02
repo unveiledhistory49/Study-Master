@@ -27,10 +27,10 @@ export default function ChatMessage({ message }: { message: ChatMessageType }) {
   };
   
   return (
-    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-6 animate-fade-in`}>
-      <div className={`flex max-w-[95%] sm:max-w-[85%] gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-8 animate-fade-in`}>
+      <div className={`flex w-full ${isUser ? 'max-w-[95%] sm:max-w-[85%] flex-row-reverse' : 'max-w-full flex-row'} gap-4`}>
         
-        <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-lg shadow-lg border ${
+        <div className={`flex-shrink-0 w-8 h-8 mt-1 rounded-full flex items-center justify-center text-sm shadow-sm border ${
           isUser 
             ? 'bg-[var(--bg-card)] border-[var(--border)]' 
             : 'bg-[image:var(--gradient-primary)] border-transparent text-white'
@@ -38,17 +38,17 @@ export default function ChatMessage({ message }: { message: ChatMessageType }) {
           {isUser ? '👤' : '🤖'}
         </div>
         
-        <div className={`p-4 rounded-2xl shadow-sm min-w-0 ${
+        <div className={`min-w-0 flex-grow ${
           isUser 
-            ? 'bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] rounded-tr-none' 
-            : 'bg-[var(--bg-secondary)] border border-[var(--border-hover)] text-[var(--text-primary)] rounded-tl-none'
+            ? 'p-4 rounded-2xl shadow-sm bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] rounded-tr-none' 
+            : 'py-1 text-[var(--text-primary)]'
         }`}>
           {isUser ? (
             <div className="text-sm whitespace-pre-wrap leading-relaxed">
               {message.content}
             </div>
           ) : (
-            <div className="chat-markdown text-sm leading-relaxed">
+            <div className="chat-markdown text-sm leading-relaxed overflow-hidden">
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm, remarkMath]}
                 rehypePlugins={[rehypeKatex]}
