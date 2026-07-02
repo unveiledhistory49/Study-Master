@@ -263,7 +263,7 @@ function ChatPageContent() {
             </button>
           </div>
 
-          <div className="flex-grow overflow-y-auto p-4 sm:p-6 sm:px-12 md:px-24 scroll-smooth relative">
+          <div className="flex-grow overflow-y-auto px-2 py-4 sm:p-6 sm:px-12 md:px-24 scroll-smooth relative">
             {!selectedConversationId && messages.length === 1 && (
                <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto mb-12">
                  <div className="w-16 h-16 rounded-full bg-[image:var(--gradient-primary)] flex items-center justify-center text-3xl shadow-xl mb-6">🤖</div>
@@ -300,7 +300,7 @@ function ChatPageContent() {
             </div>
           </div>
 
-          <div className="p-4 sm:px-12 md:px-24 pb-6 bg-gradient-to-t from-[var(--bg-primary)] to-transparent">
+          <div className="px-2 py-4 sm:px-12 md:px-24 pb-6 bg-gradient-to-t from-[var(--bg-primary)] to-transparent">
             <form onSubmit={handleSubmit} className="relative group max-w-4xl mx-auto">
               <div className="absolute -inset-1 bg-[image:var(--gradient-primary)] rounded-xl blur opacity-25 group-focus-within:opacity-50 transition duration-1000"></div>
               <div className="relative flex items-center bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-2 shadow-lg">

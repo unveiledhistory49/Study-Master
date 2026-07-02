@@ -89,8 +89,8 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
 
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-        <div className="mb-6 flex flex-wrap items-center text-sm gap-2">
+      <div className="max-w-4xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8 animate-fade-in">
+        <div className="mb-4 sm:mb-6 flex flex-wrap items-center text-sm gap-2">
           {subject && (
             <>
               <Link href={`/subjects/${subject.id}`} className="text-[var(--text-muted)] hover:text-[var(--accent-blue)] transition-colors">
@@ -110,8 +110,8 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
           <span className="text-[var(--text-primary)]">{concept.name}</span>
         </div>
 
-        <div className="glass-panel p-8 mb-8 relative">
-          <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
+        <div className="glass-panel p-3 sm:p-8 mb-8 relative w-full overflow-hidden">
+          <div className="flex flex-wrap justify-between items-start gap-4 mb-4 sm:mb-6">
             <h1 className="text-3xl font-bold text-[var(--text-primary)]">
               {concept.name}
             </h1>

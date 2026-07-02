@@ -110,17 +110,17 @@ export default function InlineQuiz({
   };
 
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6 my-4 shadow-sm">
-      <div className="flex justify-between items-center mb-6 border-b border-[var(--border)] pb-4">
-        <h3 className="text-lg font-bold text-[var(--text-primary)]">Quiz in Progress</h3>
-        <div className={`font-mono font-bold px-3 py-1 rounded-md ${timeLeft < 60 ? 'bg-red-500/20 text-red-500' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'}`}>
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-3 sm:p-6 my-4 shadow-sm w-full">
+      <div className="flex justify-between items-center mb-4 border-b border-[var(--border)] pb-3">
+        <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)]">Quiz in Progress</h3>
+        <div className={`font-mono font-bold px-2 py-1 rounded-md text-sm ${timeLeft < 60 ? 'bg-red-500/20 text-red-500' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'}`}>
           ⏱️ {formatTime(timeLeft)}
         </div>
       </div>
       
-      <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-1 custom-scrollbar">
         {data.questions.map((q, qIndex) => (
-          <div key={qIndex} className="bg-[var(--bg-secondary)] p-4 rounded-lg">
+          <div key={qIndex} className="bg-[var(--bg-secondary)] p-3 sm:p-4 rounded-lg">
             <h4 className="font-semibold text-[var(--text-primary)] mb-4">
               <span className="text-[var(--accent-blue)] mr-2">{qIndex + 1}.</span>
               {q.question}
@@ -130,7 +130,7 @@ export default function InlineQuiz({
                 const isSelected = answers[qIndex] === oIndex;
                 const isCorrect = q.answerIndex === oIndex;
                 
-                let btnClass = "w-full text-left p-3 rounded-lg border transition-colors text-sm ";
+                let btnClass = "block w-full text-left p-2 sm:p-3 rounded-lg border transition-colors text-sm break-words ";
                 
                 if (submitted) {
                   if (isCorrect) {

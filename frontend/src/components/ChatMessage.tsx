@@ -94,7 +94,7 @@ export default function ChatMessage({
 
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-8 animate-fade-in`}>
-      <div className={`flex w-full ${isUser ? 'max-w-[95%] sm:max-w-[85%] flex-row-reverse' : 'max-w-full flex-row'} gap-4`}>
+      <div className={`flex w-full ${isUser ? 'max-w-[95%] sm:max-w-[85%] flex-row-reverse' : 'max-w-full flex-row'} gap-2 sm:gap-4`}>
         
         <div className={`flex-shrink-0 w-8 h-8 mt-1 rounded-full flex items-center justify-center text-sm shadow-sm border ${
           isUser 
