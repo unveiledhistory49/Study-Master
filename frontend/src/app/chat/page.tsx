@@ -26,6 +26,20 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const history = await api.getChatHistory();
+        if (history && history.length > 0) {
+          setMessages(history);
+        }
+      } catch (error) {
+        console.error('Failed to fetch chat history:', error);
+      }
+    };
+    fetchHistory();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -78,15 +92,15 @@ export default function ChatPage() {
             <ChatMessage key={msg.id} message={msg} />
           ))}
           {isLoading && (
-            <div className="flex justify-start mb-6 animate-fade-in">
-              <div className="flex max-w-[80%] gap-4 flex-row">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl bg-[image:var(--gradient-primary)] text-white shadow-lg">
+            <div className="flex justify-start mb-8 animate-fade-in">
+              <div className="flex w-full max-w-full flex-row gap-4">
+                <div className="flex-shrink-0 w-8 h-8 mt-1 rounded-full flex items-center justify-center text-sm shadow-sm border bg-[image:var(--gradient-primary)] border-transparent text-white">
                   🤖
                 </div>
-                <div className="p-4 rounded-2xl shadow-sm bg-[var(--bg-secondary)] border border-[var(--border-hover)] rounded-tl-none flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[var(--accent-blue)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-[var(--accent-blue)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-[var(--accent-blue)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="py-1 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
               </div>
             </div>

@@ -105,3 +105,32 @@ async def chat(
             created_at=assistant_message.created_at,
         ),
     )
+
+
+@router.get("/chat/history", response_model=list[ChatResponse])
+async def get_chat_history(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    limit: int = 50,
+):
+    """Get the conversation history for the current user."""
+    result = await db.execute(
+        select(ChatMessage)
+        .where(ChatMessage.user_id == current_user.id)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(limit)
+    )
+    # Reverse to return chronological order
+    messages = list(reversed(result.scalars().all()))
+    
+    return [
+        ChatResponse(
+            id=msg.id,
+            role=msg.role,
+            content=msg.content,
+            subject_id=msg.subject_id,
+            concept_id=msg.concept_id,
+            created_at=msg.created_at,
+        )
+        for msg in messages
+    ]

@@ -81,6 +81,8 @@ export const api = {
       body: JSON.stringify(data),
     }),
     
+  getChatHistory: () => fetchWithAuth('/ai/chat/history'),
+    
   updateMastery: (concept_id: string | number, passed: boolean) =>
     fetchWithAuth(`/profile/mastery/${concept_id}`, {
       method: 'POST',
