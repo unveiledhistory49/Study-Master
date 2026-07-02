@@ -102,11 +102,25 @@ function ChatPageContent() {
 
   const searchParams = useSearchParams();
   const initialConceptId = searchParams.get('concept_id');
+  const startQuizParam = searchParams.get('start_quiz');
   const [conceptId, setConceptId] = useState<number | null>(initialConceptId ? parseInt(initialConceptId) : null);
+  const hasTriggeredQuizRef = useRef(false);
 
   // When a new conversation is selected, reset concept_id if it's not the one we just started
   // Or better, just let the backend track concept_id for the conversation.
   // Actually, for the first message of a new chat initiated from a concept page, we should send concept_id.
+  
+  // Auto-trigger quiz if start_quiz=true is present
+  useEffect(() => {
+    if (startQuizParam === 'true' && conceptId && !hasTriggeredQuizRef.current) {
+      hasTriggeredQuizRef.current = true;
+      // We need to wait slightly for state to settle, or just call sendMessage directly
+      // However sendMessage depends on state. It's safe to call it if we pass the text.
+      setTimeout(() => {
+        sendMessage("I'm done studying. Give me a quiz to test my knowledge!");
+      }, 500);
+    }
+  }, [startQuizParam, conceptId]);
   
   const sendMessage = async (messageText: string) => {
     if (isLoading) return;

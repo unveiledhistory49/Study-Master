@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import QuizModal from '@/components/QuizModal';
 import { api } from '@/lib/api';
 import { Concept, Topic, Subject } from '@/lib/types';
 
@@ -22,7 +21,6 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
   const [subject, setSubject] = useState<Subject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [isMastered, setIsMastered] = useState(false);
 
   useEffect(() => {
@@ -74,19 +72,6 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
-
-  const handleQuizComplete = async (passed: boolean) => {
-    setIsQuizOpen(false);
-    if (passed) {
-      setIsMastered(true);
-      try {
-        await api.updateMastery(concept!.id, true);
-        alert('Congratulations! Mastery score updated!');
-      } catch (err) {
-        console.error('Failed to update mastery:', err);
-      }
-    }
   };
 
   // Pre-process content for markdown math (same logic as ChatMessage)
@@ -227,7 +212,7 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
               
               <div className="flex gap-4 w-full sm:w-auto">
                 <button 
-                  onClick={() => setIsQuizOpen(true)} 
+                  onClick={() => router.push(`/chat?concept_id=${concept.id}&start_quiz=true`)} 
                   className="btn-primary flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20"
                 >
                   Done Studying (Take Quiz)
@@ -240,14 +225,6 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
       </div>
-      {concept.quiz_data && (
-        <QuizModal 
-          isOpen={isQuizOpen} 
-          onClose={() => setIsQuizOpen(false)} 
-          questions={concept.quiz_data.questions} 
-          onComplete={handleQuizComplete} 
-        />
-      )}
     </ProtectedRoute>
   );
 }
