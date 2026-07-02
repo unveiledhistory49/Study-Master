@@ -63,7 +63,7 @@ export default function InlineQuiz({
     setSubmitted(true);
     
     let score = 0;
-    const failedQuestions = [];
+    const failedQuestions: { question: string, userAnswer: string, correctAnswer: string }[] = [];
     
     answers.forEach((ans, idx) => {
       if (ans === data.questions[idx].answerIndex) {
