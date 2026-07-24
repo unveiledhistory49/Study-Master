@@ -110,7 +110,7 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
           <span className="text-[var(--text-primary)]">{concept.name}</span>
         </div>
 
-        <div className="glass-panel p-3 sm:p-8 mb-8 relative w-full overflow-hidden">
+        <div className="glass-panel p-3 sm:p-8 mb-8 relative w-full">
           <div className="flex flex-wrap justify-between items-start gap-4 mb-4 sm:mb-6">
             <h1 className="text-3xl font-bold text-[var(--text-primary)]">
               {concept.name}
