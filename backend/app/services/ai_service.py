@@ -205,32 +205,32 @@ Only use this format. Do not provide any other text outside the JSON block when 
 - Use clear, plain language first, then introduce technical/scientific terms with their definitions inline — never assume unexplained jargon.
 
 ### Required Structure
-Produce the material in this order:
+Produce the material in standard textbook format (using `##` Headings, `###` Subheadings, paragraphs, and lists) in this order:
 
 1. **Overview** (3–5 sentences): What this topic is, why it matters biologically, and how it connects to topics that came before/after it in the curriculum.
 2. **Learning Objectives**: A bullet list of what the student should be able to do after studying this (define, describe, explain, compare, apply) — phrased like performance objectives.
-3. **Core Content**: Broken into clearly headed sub-sections matching the subtopics. For each sub-section:
+3. **Core Content**: Broken into clearly headed sub-sections (`### Subtopic`) matching the subtopics. For each sub-section:
    - Full explanation of the concept, structure, or process — exhaustive, not summarized.
    - Precise definitions, set apart and bolded.
    - Step-by-step mechanisms where relevant (e.g., physiological processes, cycles, pathways) written as numbered sequences.
    - Structure-function relationships explained explicitly (don't just describe anatomy — explain *why* it's shaped/organized that way).
-   - Comparisons and differences tables where the topic involves contrasting things (e.g., X vs Y).
+   - Comparisons and differences tables **ONLY** where the subtopic explicitly contrasts 2 or more distinct things (e.g., Plant Cells vs. Animal Cells, Mitosis vs. Meiosis).
    - Real-world or applied examples to anchor abstract ideas.
    - Common misconceptions or confusion points explicitly called out and clarified.
 4. **Diagrams Description**: Where a diagram would normally appear (e.g., kidney structure, neuron, reflex arc), describe in words what it should show and label, so the student can sketch/visualize it or you can later render it separately.
-5. **Key Terms Glossary**: A clean list of every technical term introduced, each with a one-line definition.
+5. **Key Terms Glossary**: A bulleted list of every technical term introduced, each with a one-line definition (format: `- **Term**: Definition`). Do NOT use a table for this.
 6. **Worked Examples / Applied Scenarios** (if the topic involves calculations, genetics crosses, or problem-solving — e.g., Mendelian genetics, osmoregulation): fully worked, step-by-step.
-7. **Summary Table or Mind-map in Text Form**: A condensed recap of the whole topic's structure for quick review, distinct from the detailed content above.
+7. **Summary Outline**: A condensed bulleted outline of the whole topic's structure for quick review, using subheadings and bullet points. Do NOT use a table for this.
 8. **Common Exam Angles**: Bullet list of how this topic is typically tested (types of questions asked), based on WAEC/NECO Biology exam patterns, without providing actual quiz questions (those are generated separately at quiz time).
 
-### Style Rules
+### Strict Formatting & Style Rules
+- **PRIMARY FORMAT:** Write all content using standard Headings (`##`, `###`), Subheadings, plain text paragraphs, and bulleted/numbered lists.
+- **TABLE RESTRICTION:** DO NOT format general content, summaries, glossaries, overview sections, or entire lessons inside markdown tables! Use markdown tables **ONLY AND EXCLUSIVELY** when comparing and contrasting 2 or more distinct items (e.g. *Feature A vs Feature B*). All other material MUST use standard prose, headings, and bullet points.
 - Do not compress content for brevity — depth and completeness matter more than length efficiency. Do not say "for more detail see a textbook"; you ARE the textbook.
 - Avoid bare lists of disconnected facts; always explain relationships between facts (cause → effect, structure → function, stimulus → response).
-- Where the topic has "importance of X," "functions of X," "defects/diseases of X," or "care of X" style sections (common in this curriculum), include them fully and explain mechanisms behind each point, not just a label.
+- Where the topic has "importance of X," "functions of X," "defects/diseases of X," or "care of X" style sections, include them fully using subheadings and paragraphs.
 - Use metric units and correct scientific nomenclature.
-- Where classification or taxonomy is involved, use correctly formatted scientific names (italicized genus/species conceptually, even in plain text mark clearly).
 - Correct and modernize any outdated science if the traditional curriculum content is imprecise, but note when you're doing so.
-- Format with Markdown: headings (##, ###), bold for key terms, tables for comparisons, numbered lists for processes/sequences.
 
 ### Output Constraints
 - Do not include quiz questions, answers, or assessment items — this material is purely for study, before the separate quiz-generation step.
