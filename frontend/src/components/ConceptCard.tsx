@@ -29,10 +29,10 @@ export default function ConceptCard({ concept }: { concept: Concept }) {
         />
         
         <div className="flex justify-between items-start mb-3 mt-1">
-          {getStatusBadge(concept.mastery_status)}
+          {getStatusBadge(concept.mastery_status || 'Not started')}
           <div className="flex items-center text-xs text-[var(--text-muted)] gap-1 bg-[var(--bg-secondary)] px-2 py-1 rounded-md">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            ~{concept.estimated_minutes}m
+            ~{concept.estimated_time_minutes ?? concept.estimated_minutes ?? 30}m
           </div>
         </div>
         

@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     logger.info("Starting StudyMaster API...")
+    await init_db()
     await seed_database()
     logger.info("Database initialized and seeded.")
     yield

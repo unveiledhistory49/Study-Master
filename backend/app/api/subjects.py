@@ -18,29 +18,26 @@ async def list_subjects(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all subjects with topic counts and user's mastery score."""
-    result = await db.execute(select(Subject).order_by(Subject.name))
-    subjects = result.scalars().all()
-
-    items = []
-    for subject in subjects:
-        # Count topics
-        topic_count_result = await db.execute(
-            select(func.count(Topic.id)).where(Topic.subject_id == subject.id)
+    """List all subjects with topic counts and user's mastery score in a single query."""
+    stmt = (
+        select(
+            Subject,
+            func.count(func.distinct(Topic.id)).label("topic_count"),
+            func.coalesce(StudentProfile.mastery_score, 0.0).label("mastery_score")
         )
-        topic_count = topic_count_result.scalar() or 0
-
-        # Get user's mastery score
-        profile_result = await db.execute(
-            select(StudentProfile).where(
-                StudentProfile.user_id == current_user.id,
-                StudentProfile.subject_id == subject.id,
-            )
+        .outerjoin(Topic, Topic.subject_id == Subject.id)
+        .outerjoin(
+            StudentProfile,
+            (StudentProfile.subject_id == Subject.id) & (StudentProfile.user_id == current_user.id)
         )
-        profile = profile_result.scalar_one_or_none()
-        mastery_score = profile.mastery_score if profile else 0.0
+        .group_by(Subject.id, StudentProfile.id)
+        .order_by(Subject.name)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
 
-        items.append(SubjectListItem(
+    return [
+        SubjectListItem(
             id=subject.id,
             name=subject.name,
             description=subject.description,
@@ -48,9 +45,9 @@ async def list_subjects(
             color=subject.color,
             topic_count=topic_count,
             mastery_score=mastery_score,
-        ))
-
-    return items
+        )
+        for subject, topic_count, mastery_score in rows
+    ]
 
 
 @router.get("/{subject_id}", response_model=SubjectDetail)
@@ -59,31 +56,36 @@ async def get_subject(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get subject detail with its topics."""
+    """Get subject detail with its topics and concept counts in a single query."""
     result = await db.execute(select(Subject).where(Subject.id == subject_id))
     subject = result.scalar_one_or_none()
     if subject is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found")
 
-    # Get topics with concept counts
-    topics_result = await db.execute(
-        select(Topic).where(Topic.subject_id == subject.id).order_by(Topic.order_index)
-    )
-    topics = topics_result.scalars().all()
-
-    topic_briefs = []
-    for topic in topics:
-        concept_count_result = await db.execute(
-            select(func.count(Concept.id)).where(Concept.topic_id == topic.id)
+    # Get topics with concept counts via outer join aggregation
+    topic_stmt = (
+        select(
+            Topic,
+            func.count(Concept.id).label("concept_count")
         )
-        concept_count = concept_count_result.scalar() or 0
-        topic_briefs.append(TopicBrief(
+        .outerjoin(Concept, Concept.topic_id == Topic.id)
+        .where(Topic.subject_id == subject.id)
+        .group_by(Topic.id)
+        .order_by(Topic.order_index)
+    )
+    topics_result = await db.execute(topic_stmt)
+    topic_rows = topics_result.all()
+
+    topic_briefs = [
+        TopicBrief(
             id=topic.id,
             name=topic.name,
             description=topic.description,
             order_index=topic.order_index,
             concept_count=concept_count,
-        ))
+        )
+        for topic, concept_count in topic_rows
+    ]
 
     return SubjectDetail(
         id=subject.id,

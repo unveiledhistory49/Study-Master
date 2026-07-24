@@ -133,36 +133,50 @@ function ChatPageContent() {
       content: messageText
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const assistantMsgId = (Date.now() + 1).toString();
+    const placeholderAssistantMessage: ChatMessageType = {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: ''
+    };
+
+    setMessages(prev => [...prev, userMessage, placeholderAssistantMessage]);
     setIsLoading(true);
 
     try {
-      const response = await api.chat({ 
-        message: userMessage.content,
-        conversation_id: selectedConversationId || undefined,
-        concept_id: conceptId || undefined
-      });
-      
-      const assistantMessage: ChatMessageType = {
-        id: response.assistant_message?.id?.toString() || (Date.now() + 1).toString(),
-        role: response.assistant_message?.role || 'assistant',
-        content: response.assistant_message?.content || 'Sorry, I got an empty response.'
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      if (!selectedConversationId && response.user_message?.conversation_id) {
-        setSelectedConversationId(response.user_message.conversation_id);
-        fetchConversations();
-      }
+      let accumulatedContent = '';
+      await api.chatStream(
+        { 
+          message: userMessage.content,
+          conversation_id: selectedConversationId || undefined,
+          concept_id: conceptId || undefined
+        },
+        (chunk) => {
+          accumulatedContent += chunk;
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === assistantMsgId
+                ? { ...msg, content: accumulatedContent }
+                : msg
+            )
+          );
+        },
+        (newConvId) => {
+          if (!selectedConversationId) {
+            setSelectedConversationId(newConvId);
+            fetchConversations();
+          }
+        }
+      );
     } catch (error) {
       console.error('Chat error:', error);
-      const errorMessage: ChatMessageType = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.'
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === assistantMsgId
+            ? { ...msg, content: msg.content || 'Sorry, I encountered an error. Please try again.' }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
     }

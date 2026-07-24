@@ -118,7 +118,7 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
             
             <div className="flex gap-3">
               <span className="bg-[var(--bg-secondary)] border border-[var(--border)] px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)] flex items-center gap-2">
-                ⏱️ ~{concept.estimated_minutes} mins
+                ⏱️ ~{concept.estimated_time_minutes ?? concept.estimated_minutes ?? 30} mins
               </span>
               <span className="bg-[var(--bg-secondary)] border border-[var(--border)] px-3 py-1.5 rounded-lg text-sm flex items-center gap-1">
                 Difficulty: 
@@ -191,7 +191,11 @@ export default function ConceptPage({ params }: { params: Promise<{ id: string }
                 <span>📚</span> Prerequisites
               </h4>
               <p className="text-[var(--text-secondary)] text-sm">
-                {concept.prerequisites}
+                {typeof concept.prerequisites === 'string'
+                  ? concept.prerequisites
+                  : Array.isArray(concept.prerequisites)
+                  ? concept.prerequisites.map(p => p.name).join(', ')
+                  : ''}
               </p>
             </div>
           )}

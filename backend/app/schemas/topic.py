@@ -9,6 +9,7 @@ class ConceptBrief(BaseModel):
     difficulty: int
     importance: int
     order_index: int
+    estimated_time_minutes: int = 30
 
     class Config:
         from_attributes = True

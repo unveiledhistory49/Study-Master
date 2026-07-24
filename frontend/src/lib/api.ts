@@ -81,6 +81,58 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  chatStream: async (
+    data: { message: string, subject_id?: number, concept_id?: number, conversation_id?: number },
+    onChunk: (chunk: string) => void,
+    onConversationId?: (convId: number) => void
+  ) => {
+    const token = getToken();
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+
+    const response = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(errorData.detail || 'Streaming failed', response.status);
+    }
+
+    const convIdHeader = response.headers.get('X-Conversation-Id');
+    if (convIdHeader && onConversationId) {
+      onConversationId(parseInt(convIdHeader, 10));
+    }
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    if (!reader) return;
+
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed.content) onChunk(parsed.content);
+          } catch {
+            onChunk(raw);
+          }
+        }
+      }
+    }
+  },
     
   getChatHistory: (conversation_id?: number) => {
     const query = conversation_id ? `?conversation_id=${conversation_id}` : '';

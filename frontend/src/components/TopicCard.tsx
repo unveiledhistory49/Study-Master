@@ -18,7 +18,7 @@ export default function TopicCard({ topic, index }: { topic: Topic, index: numbe
         
         <div className="flex flex-col items-end gap-2 min-w-[120px]">
           <span className="text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-2 py-1 rounded-md">
-            {topic.concepts?.length || 0} Concepts
+            {topic.concept_count ?? topic.concepts?.length ?? 0} Concepts
           </span>
           
           <div className="w-full h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden border border-[var(--border)]">

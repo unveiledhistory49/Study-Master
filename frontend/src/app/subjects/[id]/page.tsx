@@ -73,7 +73,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
 
         <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Topics</h2>
         <div className="space-y-4">
-          {subject.topics?.sort((a, b) => a.order - b.order).map((topic, index) => (
+          {subject.topics?.sort((a, b) => (a.order_index ?? a.order ?? 0) - (b.order_index ?? b.order ?? 0)).map((topic, index) => (
             <TopicCard key={topic.id} topic={topic} index={index} />
           ))}
           

@@ -38,10 +38,12 @@ export default function Dashboard() {
 
   if (isLoading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
 
-  const totalTimeSpent = profiles.reduce((acc, profile) => acc + profile.time_spent, 0);
+  const totalTimeSpent = profiles.reduce((acc, profile) => acc + (profile.total_study_time_minutes ?? profile.time_spent ?? 0), 0);
   const averageMastery = profiles.length > 0 
     ? Math.round(profiles.reduce((acc, profile) => acc + profile.mastery_score, 0) / profiles.length) 
     : 0;
+  const totalMastered = profiles.reduce((acc, profile) => acc + (profile.concepts_mastered || 0), 0);
+  const maxStreak = profiles.reduce((max, profile) => Math.max(max, profile.current_streak || 0), 0);
 
   return (
     <ProtectedRoute>
@@ -60,9 +62,9 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <StatCard title="Overall Mastery" value={`${averageMastery}%`} icon="🎯" subtitle="Across all subjects" />
-          <StatCard title="Total Study Time" value={`${Math.round(totalTimeSpent / 60)}h ${totalTimeSpent % 60}m`} icon="⏱️" subtitle="Since you started" />
-          <StatCard title="Study Streak" value="5 Days" icon="🔥" subtitle="Keep it up!" />
-          <StatCard title="Concepts Mastered" value="12" icon="🧠" subtitle="You're doing great" />
+          <StatCard title="Total Study Time" value={`${Math.floor(totalTimeSpent / 60)}h ${totalTimeSpent % 60}m`} icon="⏱️" subtitle="Since you started" />
+          <StatCard title="Study Streak" value={`${maxStreak} Days`} icon="🔥" subtitle="Keep it up!" />
+          <StatCard title="Concepts Mastered" value={`${totalMastered}`} icon="🧠" subtitle="You're doing great" />
         </div>
 
         <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Your Subjects</h2>

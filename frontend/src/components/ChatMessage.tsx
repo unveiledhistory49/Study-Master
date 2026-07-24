@@ -1,5 +1,4 @@
-'use client';
-
+import { useMemo, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -7,7 +6,7 @@ import rehypeKatex from 'rehype-katex';
 import { ChatMessage as ChatMessageType } from '@/lib/types';
 import InlineQuiz from './InlineQuiz';
 
-export default function ChatMessage({ 
+function ChatMessageComponent({ 
   message, 
   onSendContextMessage,
   quizPassStreak = 0,
@@ -21,7 +20,6 @@ export default function ChatMessage({
   const isUser = message.role === 'user';
 
   // Pre-process content: convert LaTeX-style \frac, \dfrac etc. into $...$ delimiters
-  // so remark-math can detect them. The AI often outputs bare LaTeX without $ wrappers.
   const processContent = (text: string): string => {
     let result = text.replace(/\\\(([\s\S]+?)\\\)/g, (_, expr) => `$${expr}$`);
     result = result.replace(/\\\[([\s\S]+?)\\\]/g, (_, expr) => `$$${expr}$$`);
@@ -32,8 +30,8 @@ export default function ChatMessage({
     return result;
   };
   
-  // Custom renderer for code blocks to detect our JSON quiz
-  const renderers = {
+  // Custom renderer for code blocks to detect JSON quiz
+  const renderers = useMemo(() => ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     code({ node, inline, className, children, ...props }: any) {
       const isQuiz = className?.includes('language-json') && String(children).includes('"questions"');
@@ -64,7 +62,7 @@ export default function ChatMessage({
                         onSendContextMessage(msg);
                       }
                     } else {
-                      if (onUpdateStreak) onUpdateStreak(0); // Reset streak
+                      if (onUpdateStreak) onUpdateStreak(0);
                       const msg = `I just took the quiz! I scored ${result.score} out of ${result.total} (${percentage}%).\n\nHere are the questions I failed:\n${failedDetails}\n\nMy streak has been reset to 0 because I scored below 70%. Please re-explain the concepts I failed on in a different way to help me understand, and then automatically generate another quiz for me to try again so I can start building my streak again.`;
                       onSendContextMessage(msg);
                     }
@@ -90,7 +88,17 @@ export default function ChatMessage({
         </code>
       );
     }
-  };
+  }), [onSendContextMessage, quizPassStreak, onUpdateStreak]);
+
+  const parsedMarkdown = useMemo(() => (
+    <ReactMarkdown 
+      remarkPlugins={[remarkGfm, remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={renderers}
+    >
+      {processContent(message.content)}
+    </ReactMarkdown>
+  ), [message.content, renderers]);
 
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-8 animate-fade-in`}>
@@ -115,13 +123,7 @@ export default function ChatMessage({
             </div>
           ) : (
             <div className="chat-markdown text-sm leading-relaxed overflow-hidden">
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[rehypeKatex]}
-                components={renderers}
-              >
-                {processContent(message.content)}
-              </ReactMarkdown>
+              {parsedMarkdown}
             </div>
           )}
         </div>
@@ -130,3 +132,5 @@ export default function ChatMessage({
     </div>
   );
 }
+
+export default memo(ChatMessageComponent);
