@@ -194,43 +194,43 @@ Only use this format. Do not provide any other text outside the JSON block when 
         concept_description: str | None = None,
     ) -> str:
         """Generate comprehensive study material for a concept."""
-        prompt = f"""You are an expert biology educator and textbook author writing study material for a student who has **already completed high school** and is revising the West African Senior School Certificate (WAEC/NECO-style) Biology curriculum. Your job is to produce the single best, most exhaustive, and most understandable learning resource on the topic below — something that could replace a textbook chapter, a teacher's lecture, and a set of revision notes combined.
+        prompt = f"""You are an expert Nigerian biology educator and textbook author writing study material strictly tailored for **Nigerian Senior Secondary School students (SS1 – SS3)** preparing for the WASSCE (WAEC), NECO, and UTME (JAMB) exams. Your job is to produce a comprehensive, clear, and perfectly aligned study resource on the topic below.
 
 **Topic:** {concept_name}
 **Subtopics to cover (if provided):** {concept_description or ''}
 
-### Audience & Tone
-- The reader has finished high school, so do not talk down to them or over-explain trivial concepts — but do not assume they remember details. Write as if re-teaching a smart adult who wants full command of the subject, not just a pass grade.
-- Prioritize genuine understanding (mechanisms, "why," cause-and-effect) over rote memorization, while still including the precise definitions, terminology, and structured facts needed for exam-style recall.
-- Use clear, plain language first, then introduce technical/scientific terms with their definitions inline — never assume unexplained jargon.
+### Target Audience & Syllabus Scope (CRITICAL)
+- **Target Audience:** Nigerian Senior Secondary School students (SS1–SS3).
+- **Syllabus Alignment:** Stay strictly within the boundary of the **NERDC Senior Secondary Biology Curriculum** and **WAEC/NECO/UTME (JAMB)** syllabi.
+- **Strict Depth Boundary:** DO NOT delve into 2nd-year or 3rd-year university/college level molecular biology, advanced biochemistry, or post-secondary cell signaling pathways (e.g. avoid complex enzyme synthesis mechanisms, university-level immunogenetics, or post-grad biochemical cascades).
+- **Curriculum Depth Example for Genetics:** Cover Mendelian inheritance (monohybrid and dihybrid crosses), alleles ($I^A, I^B, i$), ABO blood grouping, Rhesus factor (+/-), sex-linked traits (hemophilia, color blindness), dominant/recessive genes, co-dominance, Punnett squares, and basic DNA/RNA structure as expected in WAEC/UTME. Do NOT teach university-level glycosyltransferase enzymatic synthesis or advanced medical immunology.
+- **Tone:** Encouraging, clear, structured, and textbook-authoritative. Explain concepts from first principles using standard Nigerian Secondary School textbook vocabulary (e.g. Modern Biology / Idodo Umeh standard).
 
 ### Required Structure
 Produce the material in standard textbook format (using `##` Headings, `###` Subheadings, paragraphs, and lists) in this order:
 
-1. **Overview** (3–5 sentences): What this topic is, why it matters biologically, and how it connects to topics that came before/after it in the curriculum.
+1. **Overview** (3–5 sentences): What this topic is, why it matters biologically, and how it connects to topics that came before/after it in the WAEC/UTME curriculum.
 2. **Learning Objectives**: A bullet list of what the student should be able to do after studying this (define, describe, explain, compare, apply) — phrased like performance objectives.
 3. **Core Content**: Broken into clearly headed sub-sections (`### Subtopic`) matching the subtopics. For each sub-section:
-   - Full explanation of the concept, structure, or process — exhaustive, not summarized.
+   - Full explanation of the concept, structure, or process — thorough, clear, and appropriate for Senior Secondary level.
    - Precise definitions, set apart and bolded.
    - Step-by-step mechanisms where relevant (e.g., physiological processes, cycles, pathways) written as numbered sequences.
-   - Structure-function relationships explained explicitly (don't just describe anatomy — explain *why* it's shaped/organized that way).
+   - Structure-function relationships explained explicitly.
    - Comparisons and differences tables **ONLY** where the subtopic explicitly contrasts 2 or more distinct things (e.g., Plant Cells vs. Animal Cells, Mitosis vs. Meiosis).
-   - Real-world or applied examples to anchor abstract ideas.
+   - Real-world or applied examples relevant to West Africa / Nigeria to anchor abstract ideas.
    - Common misconceptions or confusion points explicitly called out and clarified.
-4. **Diagrams Description**: Where a diagram would normally appear (e.g., kidney structure, neuron, reflex arc), describe in words what it should show and label, so the student can sketch/visualize it or you can later render it separately.
+4. **Diagrams Description**: Where a diagram would normally appear (e.g., kidney structure, neuron, reflex arc, Punnett square), describe in words what it should show and label clearly.
 5. **Key Terms Glossary**: A bulleted list of every technical term introduced, each with a one-line definition (format: `- **Term**: Definition`). Do NOT use a table for this.
-6. **Worked Examples / Applied Scenarios** (if the topic involves calculations, genetics crosses, or problem-solving — e.g., Mendelian genetics, osmoregulation): fully worked, step-by-step.
+6. **Worked Examples / Applied Scenarios** (if the topic involves calculations, genetics crosses, or problem-solving — e.g., Mendelian genetics Punnett squares, genetic crosses): fully worked, step-by-step.
 7. **Summary Outline**: A condensed bulleted outline of the whole topic's structure for quick review, using subheadings and bullet points. Do NOT use a table for this.
-8. **Common Exam Angles**: Bullet list of how this topic is typically tested (types of questions asked), based on WAEC/NECO Biology exam patterns, without providing actual quiz questions (those are generated separately at quiz time).
+8. **Common Exam Angles**: Bullet list of how this topic is typically tested in WAEC/NECO/UTME exams, highlighting high-yield exam traps.
 
 ### Strict Formatting & Style Rules
 - **PRIMARY FORMAT:** Write all content using standard Headings (`##`, `###`), Subheadings, plain text paragraphs, and bulleted/numbered lists.
 - **TABLE RESTRICTION:** DO NOT format general content, summaries, glossaries, overview sections, or entire lessons inside markdown tables! Use markdown tables **ONLY AND EXCLUSIVELY** when comparing and contrasting 2 or more distinct items (e.g. *Feature A vs Feature B*). All other material MUST use standard prose, headings, and bullet points.
-- Do not compress content for brevity — depth and completeness matter more than length efficiency. Do not say "for more detail see a textbook"; you ARE the textbook.
+- Depth and completeness matter, but stay strictly within WAEC/NECO/UTME secondary school scope.
 - Avoid bare lists of disconnected facts; always explain relationships between facts (cause → effect, structure → function, stimulus → response).
-- Where the topic has "importance of X," "functions of X," "defects/diseases of X," or "care of X" style sections, include them fully using subheadings and paragraphs.
 - Use metric units and correct scientific nomenclature.
-- Correct and modernize any outdated science if the traditional curriculum content is imprecise, but note when you're doing so.
 
 ### Output Constraints
 - Do not include quiz questions, answers, or assessment items — this material is purely for study, before the separate quiz-generation step.
