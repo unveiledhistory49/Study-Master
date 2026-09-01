@@ -55,44 +55,50 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-        <div className="flex justify-between items-end mb-8">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-8 border-b border-[#242424] gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
-              Welcome back, {user?.username}! 👋
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Hello, {user?.username}
             </h1>
-            <p className="text-[var(--text-secondary)]">Ready to continue your UTME prep?</p>
+            <p className="text-xs text-[#8e8e8e] mt-1">
+              UTME Science Preparation (Biology, Chemistry, Physics)
+            </p>
           </div>
-          <Link to="/chat" className="btn-primary hidden sm:flex items-center gap-2">
-            <span>💬</span> Start AI Session
+          <Link
+            to="/chat"
+            className="inline-flex items-center gap-2 bg-white text-black text-xs font-semibold px-4 py-2 rounded hover:bg-[#e5e5e5] transition-colors self-start sm:self-auto"
+          >
+            <span>💬</span> Open AI Tutor
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <StatCard title="Overall Mastery" value={`${averageMastery}%`} icon="🎯" subtitle="Across all subjects" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          <StatCard title="Overall Mastery" value={`${averageMastery}%`} icon="🎯" />
           <StatCard
-            title="Total Study Time"
+            title="Study Time"
             value={`${Math.floor(totalTimeSpent / 60)}h ${totalTimeSpent % 60}m`}
             icon="⏱️"
-            subtitle="Since you started"
           />
-          <StatCard title="Study Streak" value={`${maxStreak} Days`} icon="🔥" subtitle="Keep it up!" />
-          <StatCard title="Concepts Mastered" value={`${totalMastered}`} icon="🧠" subtitle="You're doing great" />
+          <StatCard title="Streak" value={`${maxStreak}d`} icon="🔥" />
+          <StatCard title="Mastered" value={`${totalMastered}`} icon="🧠" />
         </div>
 
-        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Your Subjects</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {subjects.map((subject) => (
-            <SubjectCard key={subject.id} subject={subject} />
-          ))}
-        </div>
+        {/* Subjects Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-white">Syllabus Subjects</h2>
+            <span className="text-xs text-[#8e8e8e]">{subjects.length} Subjects Active</span>
+          </div>
 
-        <Link
-          to="/chat"
-          className="sm:hidden btn-primary w-full py-4 flex justify-center items-center gap-2 text-lg"
-        >
-          <span>💬</span> Start AI Session
-        </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {subjects.map((subject) => (
+              <SubjectCard key={subject.id} subject={subject} />
+            ))}
+          </div>
+        </div>
       </div>
     </ProtectedRoute>
   );

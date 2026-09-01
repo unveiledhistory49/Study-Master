@@ -5,6 +5,13 @@ import ChatMessage from '@/components/ChatMessage';
 import { api } from '@/lib/api';
 import { ChatMessage as ChatMessageType, Conversation } from '@/lib/types';
 
+const STARTER_PROMPTS = [
+  { label: '🧬 Cell Structure & Division', prompt: 'Explain the difference between mitosis and meiosis for UTME Biology.' },
+  { label: '🧪 Chemical Bonding', prompt: 'Explain electrovalent vs covalent bonding with examples for UTME Chemistry.' },
+  { label: '⚛️ Projectile Motion', prompt: 'Explain the key formulas and concepts for projectile motion in UTME Physics.' },
+  { label: '📝 Quick Practice Quiz', prompt: 'Give me a 5-question UTME practice quiz across Biology, Chemistry, and Physics.' },
+];
+
 export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
@@ -14,17 +21,17 @@ export default function ChatPage() {
     {
       id: '1',
       role: 'assistant',
-      content:
-        'Hello! I am your StudyMaster AI Tutor. What would you like to learn today? You can ask me to explain a concept, give you a quiz, or help you prepare for UTME.',
+      content: 'Hello. I am your StudyMaster AI Tutor for UTME (Biology, Chemistry, and Physics). What topic would you like to cover today?',
     },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   };
 
   useEffect(() => {
@@ -43,8 +50,7 @@ export default function ChatPage() {
             {
               id: '1',
               role: 'assistant',
-              content:
-                'Hello! I am your StudyMaster AI Tutor. What would you like to learn today?',
+              content: 'Hello. I am your StudyMaster AI Tutor for UTME. What topic would you like to cover today?',
             },
           ]);
         }
@@ -77,8 +83,7 @@ export default function ChatPage() {
       {
         id: '1',
         role: 'assistant',
-        content:
-          'Hello! I am your StudyMaster AI Tutor. What would you like to learn today?',
+        content: 'Hello. I am your StudyMaster AI Tutor for UTME. What topic would you like to cover today?',
       },
     ]);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -114,7 +119,7 @@ export default function ChatPage() {
       hasTriggeredQuizRef.current = true;
       setTimeout(() => {
         sendMessage("I'm done studying. Give me a quiz to test my knowledge!");
-      }, 500);
+      }, 200);
     }
   }, [startQuizParam, conceptId]);
 
@@ -167,7 +172,7 @@ export default function ChatPage() {
           msg.id === assistantMsgId
             ? {
                 ...msg,
-                content: msg.content || 'Sorry, I encountered an error. Please try again.',
+                content: msg.content || 'Error connecting to AI service. Please try again.',
               }
             : msg
         )
@@ -177,191 +182,194 @@ export default function ChatPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!input.trim() || isLoading) return;
+      const text = input.trim();
+      setInput('');
+      sendMessage(text);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     const text = input.trim();
     setInput('');
-    await sendMessage(text);
+    sendMessage(text);
   };
+
+  const isEmptyChat = !selectedConversationId && messages.length <= 1;
 
   return (
     <ProtectedRoute>
-      <div className="flex h-[calc(100vh-4rem)] max-w-[1600px] w-full mx-auto relative overflow-hidden bg-[var(--bg-primary)]">
-        {/* Mobile Sidebar Overlay */}
+      <div className="flex h-[calc(100vh-3.5rem)] w-full bg-[#000000] text-white overflow-hidden">
+        {/* Mobile Sidebar Backdrop */}
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-20 md:hidden"
+            className="fixed inset-0 bg-black/70 z-30 md:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar */}
-        <div
+        <aside
           className={`
-          absolute md:static inset-y-0 left-0 z-30
-          w-72 flex-shrink-0 flex flex-col border-r border-[var(--border)] bg-[var(--bg-card)]
-          transform transition-transform duration-300 ease-in-out
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
-        `}
+            fixed md:static inset-y-0 left-0 z-40
+            w-64 flex-shrink-0 flex flex-col bg-[#121212] border-r border-[#242424]
+            transition-transform duration-200 ease-out
+            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
+          `}
         >
-          <div className="p-4 border-b border-[var(--border)] flex justify-between items-center">
+          {/* New Chat Button */}
+          <div className="p-3 border-b border-[#242424]">
             <button
               onClick={handleNewChat}
-              className="flex-grow flex items-center gap-2 bg-[image:var(--gradient-primary)] text-white px-4 py-2.5 rounded-lg hover:opacity-90 transition shadow-sm font-medium cursor-pointer"
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#242424] border border-[#2f2f2f] rounded-md transition-colors cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              New Chat
-            </button>
-            <button
-              className="md:hidden ml-2 text-[var(--text-secondary)] p-2 cursor-pointer"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <span>+ New chat</span>
+              <span className="text-xs text-[#8e8e8e]">⌘K</span>
             </button>
           </div>
 
-          <div className="flex-grow overflow-y-auto p-3 space-y-1">
-            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3 px-2 mt-2">
-              Recent Chats
+          {/* Conversations List */}
+          <div className="flex-1 overflow-y-auto p-2 space-y-0.5 text-sm">
+            <div className="px-2 py-1.5 text-xs font-semibold text-[#8e8e8e] uppercase tracking-wider">
+              Chats
             </div>
             {conversations.map((conv) => (
               <div
                 key={conv.id}
                 onClick={() => selectConversation(conv.id)}
                 className={`
-                  group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors
+                  group flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer text-xs
                   ${
                     selectedConversationId === conv.id
-                      ? 'bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)]'
-                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] border border-transparent'
+                      ? 'bg-[#212121] text-white font-medium'
+                      : 'text-[#a1a1aa] hover:bg-[#1a1a1a] hover:text-white'
                   }
                 `}
               >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <svg className="w-5 h-5 flex-shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                    />
-                  </svg>
-                  <span className="truncate text-sm font-medium">{conv.title}</span>
-                </div>
+                <span className="truncate pr-2">{conv.title || 'Untitled chat'}</span>
                 <button
                   onClick={(e) => handleDeleteConversation(e, conv.id)}
-                  className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 transition px-1 cursor-pointer"
+                  className="opacity-0 group-hover:opacity-100 text-[#8e8e8e] hover:text-white transition-opacity p-0.5"
+                  title="Delete chat"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
+                  ✕
                 </button>
               </div>
             ))}
             {conversations.length === 0 && (
-              <div className="text-center text-[var(--text-muted)] text-sm mt-8 px-4">
-                No recent conversations. Start a new chat!
-              </div>
+              <div className="px-2 py-4 text-xs text-[#666666]">No saved conversations</div>
             )}
           </div>
-        </div>
+        </aside>
 
-        {/* Main Chat Area */}
-        <div className="flex-grow flex flex-col w-full h-full">
-          {/* Mobile Header */}
-          <div className="md:hidden flex items-center justify-between p-4 border-b border-[var(--border)] bg-[var(--bg-card)]">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col h-full bg-[#000000] min-w-0">
+          {/* Mobile Top Controls */}
+          <div className="md:hidden flex items-center justify-between p-3 border-b border-[#242424] bg-[#121212]">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              className="text-[#8e8e8e] hover:text-white text-sm px-2 py-1 border border-[#2f2f2f] rounded"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              ☰ Chats
             </button>
-            <span className="font-semibold text-[var(--text-primary)] truncate max-w-[200px]">
+            <span className="text-xs font-medium truncate max-w-[160px]">
               {selectedConversationId
                 ? conversations.find((c) => c.id === selectedConversationId)?.title
-                : 'New Chat'}
+                : 'New chat'}
             </span>
-            <button onClick={handleNewChat} className="cursor-pointer">
-              <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
+            <button
+              onClick={handleNewChat}
+              className="text-xs text-white bg-[#242424] px-2 py-1 rounded"
+            >
+              + New
             </button>
           </div>
 
-          <div className="flex-grow overflow-y-auto px-2 py-4 sm:p-6 sm:px-12 md:px-24 scroll-smooth relative">
-            {!selectedConversationId && messages.length === 1 && (
-              <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto mb-12">
-                <div className="w-16 h-16 rounded-full bg-[image:var(--gradient-primary)] flex items-center justify-center text-3xl shadow-xl mb-6">
-                  🤖
+          {/* Messages Stream */}
+          <div className="flex-1 overflow-y-auto">
+            {isEmptyChat ? (
+              <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center justify-center text-center h-full">
+                <div className="w-10 h-10 rounded-full bg-white text-black font-bold text-lg flex items-center justify-center mb-4">
+                  S
                 </div>
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">How can I help you learn?</h2>
-                <p className="text-[var(--text-muted)]">
-                  Ask me to explain difficult concepts, create practice quizzes, or help you solve past questions.
+                <h1 className="text-xl font-semibold text-white mb-2">What do you want to learn?</h1>
+                <p className="text-xs text-[#8e8e8e] max-w-sm mb-8">
+                  Ask any UTME syllabus question, request a concept breakdown, or test yourself with an instant quiz.
                 </p>
-              </div>
-            )}
 
-            <div className={`${!selectedConversationId && messages.length === 1 ? 'hidden' : 'block'}`}>
-              {messages.map((msg) => (
-                <ChatMessage
-                  key={msg.id}
-                  message={msg}
-                  onSendContextMessage={sendMessage}
-                  quizPassStreak={quizPassStreak}
-                  onUpdateStreak={(newStreak) => setQuizPassStreak(newStreak)}
-                />
-              ))}
-              {isLoading && (
-                <div className="flex justify-start mb-8 animate-fade-in">
-                  <div className="flex w-full max-w-full flex-row gap-4">
-                    <div className="flex-shrink-0 w-8 h-8 mt-1 rounded-full flex items-center justify-center text-sm shadow-sm border bg-[image:var(--gradient-primary)] border-transparent text-white">
-                      🤖
-                    </div>
-                    <div className="py-1 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                {/* Starter Prompts Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
+                  {STARTER_PROMPTS.map((starter, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => sendMessage(starter.prompt)}
+                      className="p-3 text-left bg-[#121212] hover:bg-[#1a1a1a] border border-[#242424] hover:border-[#3a3a3a] rounded-lg transition-colors cursor-pointer"
+                    >
+                      <div className="text-xs font-medium text-white mb-1">{starter.label}</div>
+                      <div className="text-[11px] text-[#8e8e8e] line-clamp-1">{starter.prompt}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="pb-4">
+                {messages.map((msg) => (
+                  <ChatMessage
+                    key={msg.id}
+                    message={msg}
+                    onSendContextMessage={sendMessage}
+                    quizPassStreak={quizPassStreak}
+                    onUpdateStreak={(newStreak) => setQuizPassStreak(newStreak)}
+                  />
+                ))}
+
+                {isLoading && (
+                  <div className="w-full py-4 bg-[#000000] border-b border-[#1f1f1f]">
+                    <div className="max-w-3xl mx-auto px-4 flex gap-4">
+                      <div className="w-6 h-6 rounded bg-white text-black text-xs font-bold flex items-center justify-center">
+                        AI
+                      </div>
+                      <div className="flex items-center gap-1.5 py-1 text-[#8e8e8e] text-xs">
+                        <span>Thinking</span>
+                        <span className="animate-pulse">...</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </div>
 
-          <div className="px-2 py-4 sm:px-12 md:px-24 pb-6 bg-gradient-to-t from-[var(--bg-primary)] to-transparent">
-            <form onSubmit={handleSubmit} className="relative group max-w-4xl mx-auto">
-              <div className="absolute -inset-1 bg-[image:var(--gradient-primary)] rounded-xl blur opacity-25 group-focus-within:opacity-50 transition duration-1000" />
-              <div className="relative flex items-center bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-2 shadow-lg">
-                <input
-                  type="text"
+          {/* Prompt Input Capsule */}
+          <div className="p-3 sm:p-4 bg-[#000000] border-t border-[#1f1f1f]">
+            <form onSubmit={handleFormSubmit} className="max-w-3xl mx-auto relative">
+              <div className="flex items-end bg-[#181818] border border-[#2f2f2f] focus-within:border-[#555555] rounded-xl p-2">
+                <textarea
+                  ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Message StudyMaster AI Tutor..."
-                  className="flex-grow bg-transparent text-[var(--text-primary)] px-4 py-3 focus:outline-none placeholder-[var(--text-muted)]"
+                  onKeyDown={handleKeyDown}
+                  placeholder="Message StudyMaster AI Tutor... (Press Enter to send)"
+                  rows={1}
                   disabled={isLoading}
+                  className="flex-1 bg-transparent text-sm text-white placeholder-[#8e8e8e] px-2 py-1.5 resize-none focus:outline-none max-h-32 min-h-[24px]"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="ml-2 bg-[var(--accent-blue)] hover:bg-blue-600 text-white p-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+                  className="w-8 h-8 rounded-lg bg-white text-black font-bold flex items-center justify-center hover:bg-[#e5e5e5] disabled:opacity-20 disabled:cursor-not-allowed transition-opacity cursor-pointer ml-2 flex-shrink-0"
                 >
-                  <svg className="w-5 h-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
+                  ↑
                 </button>
+              </div>
+              <div className="text-[10px] text-[#666666] text-center mt-2">
+                StudyMaster can make mistakes. Verify critical exam formulas against syllabus materials.
               </div>
             </form>
           </div>

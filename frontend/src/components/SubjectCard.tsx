@@ -3,11 +3,11 @@ import ProgressRing from './ProgressRing';
 import { Subject } from '@/lib/types';
 
 const subjectIcons: Record<string, string> = {
-  'Biology': '🧬',
-  'Chemistry': '🧪',
-  'Physics': '⚛️',
-  'Mathematics': '📐',
-  'English': '📚',
+  Biology: '🧬',
+  Chemistry: '🧪',
+  Physics: '⚛️',
+  Mathematics: '📐',
+  English: '📚',
 };
 
 export default function SubjectCard({ subject }: { subject: Subject }) {
@@ -15,27 +15,26 @@ export default function SubjectCard({ subject }: { subject: Subject }) {
 
   return (
     <Link to={`/subjects/${subject.id}`} className="block">
-      <div className="glass-card p-6 h-full flex flex-col group">
-        <div className="flex justify-between items-start mb-4">
-          <div className="bg-[var(--bg-secondary)] p-3 rounded-xl border border-[var(--border)] group-hover:border-[var(--accent-blue)] transition-colors text-3xl">
-            {icon}
+      <div className="border border-[#2f2f2f] hover:border-[#555555] bg-[#121212] hover:bg-[#181818] p-4 rounded-md transition-colors h-full flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{icon}</span>
+              <h3 className="text-base font-semibold text-white">{subject.name}</h3>
+            </div>
+            <ProgressRing percentage={subject.mastery_percentage || 0} size={36} strokeWidth={3} />
           </div>
-          <ProgressRing percentage={subject.mastery_percentage || 0} size={50} strokeWidth={4} />
+          <p className="text-xs text-[#8e8e8e] line-clamp-2 leading-relaxed mb-4">
+            {subject.description}
+          </p>
         </div>
 
-        <h3 className="text-xl font-bold mb-2 text-[var(--text-primary)] group-hover:text-[var(--accent-blue)] transition-colors">
-          {subject.name}
-        </h3>
-        <p className="text-[var(--text-secondary)] text-sm mb-6 flex-grow line-clamp-2">
-          {subject.description}
-        </p>
-
-        <div className="mt-auto flex items-center justify-between">
-          <span className="text-sm text-[var(--text-muted)] bg-[var(--bg-secondary)] px-3 py-1 rounded-full">
+        <div className="flex items-center justify-between pt-3 border-t border-[#242424] text-xs">
+          <span className="text-[#8e8e8e]">
             {subject.topics?.length || subject.topic_count || 0} Topics
           </span>
-          <span className="text-[var(--accent-blue)] text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-            Continue <span aria-hidden="true">&rarr;</span>
+          <span className="text-white font-medium hover:underline">
+            View Topics &rarr;
           </span>
         </div>
       </div>

@@ -23,58 +23,65 @@ export default function Navbar() {
   if (location.pathname === '/login') return null;
 
   return (
-    <nav className="sticky top-0 z-50 bg-[var(--bg-glass)] backdrop-blur-lg border-b border-[var(--border)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-primary)] flex items-center justify-center text-white font-bold group-hover:shadow-[0_0_15px_var(--accent-blue-glow)] transition-all">
+    <header className="sticky top-0 z-50 bg-[#000000] border-b border-[#2f2f2f]">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+        {/* Brand */}
+        <div className="flex items-center gap-6">
+          <Link to="/" className="flex items-center gap-2 text-white font-semibold text-base tracking-tight">
+            <span className="w-6 h-6 rounded bg-white text-black text-xs font-bold flex items-center justify-center">
               S
-            </div>
-            <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-[image:var(--gradient-primary)]">
-              StudyMaster
             </span>
+            <span>StudyMaster</span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <nav className="hidden sm:flex items-center space-x-1">
             <Link
               to="/"
-              className={`text-sm font-medium transition-colors hover:text-[var(--accent-blue)] ${
-                location.pathname === '/' ? 'text-[var(--accent-blue)]' : 'text-[var(--text-secondary)]'
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/'
+                  ? 'bg-[#181818] text-white'
+                  : 'text-[#8e8e8e] hover:text-white hover:bg-[#181818]'
               }`}
             >
               Dashboard
             </Link>
             <Link
               to="/chat"
-              className={`text-sm font-medium transition-colors hover:text-[var(--accent-blue)] ${
-                location.pathname === '/chat' ? 'text-[var(--accent-blue)]' : 'text-[var(--text-secondary)]'
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/chat'
+                  ? 'bg-[#181818] text-white'
+                  : 'text-[#8e8e8e] hover:text-white hover:bg-[#181818]'
               }`}
             >
               AI Tutor
             </Link>
-          </div>
+          </nav>
+        </div>
 
-          <div className="flex items-center gap-4">
-            {user ? (
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-[var(--text-secondary)] hidden sm:block">
-                  {user.username}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors cursor-pointer"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <Link to="/login" className="btn-primary py-1.5 px-4 text-sm">
-                Login
-              </Link>
-            )}
-          </div>
+        {/* User / Actions */}
+        <div className="flex items-center gap-3">
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-[#8e8e8e] border border-[#2f2f2f] bg-[#121212] px-2.5 py-1 rounded">
+                {user.username}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="text-xs text-[#8e8e8e] hover:text-white transition-colors cursor-pointer px-2 py-1"
+              >
+                Log out
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-white text-black px-3 py-1 rounded text-xs font-semibold hover:bg-neutral-200"
+            >
+              Log in
+            </Link>
+          )}
         </div>
       </div>
-    </nav>
+    </header>
   );
 }

@@ -30,59 +30,49 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-[var(--bg-primary)]">
-      {/* Background decorations */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--accent-blue)] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse" />
-      <div
-        className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[var(--accent-purple)] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse"
-        style={{ animationDelay: '2s' }}
-      />
-
-      <div className="glass-panel w-full max-w-md p-8 relative z-10 animate-fade-in text-center">
-        <div className="mb-8">
-          <div className="w-16 h-16 mx-auto bg-[image:var(--gradient-primary)] rounded-2xl flex items-center justify-center shadow-[0_0_30px_var(--accent-blue-glow)] mb-6 transform transition-transform hover:rotate-12">
-            <span className="text-3xl text-white font-bold">S</span>
-          </div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-[image:var(--gradient-primary)] mb-2">
-            StudyMaster
-          </h1>
-          <p className="text-[var(--text-secondary)]">Who is studying today?</p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#000000] text-white">
+      <div className="w-full max-w-sm border border-[#2f2f2f] bg-[#121212] p-8 rounded-lg text-center">
+        {/* Brand */}
+        <div className="w-10 h-10 mx-auto bg-white text-black font-bold text-lg rounded flex items-center justify-center mb-4">
+          S
         </div>
+        <h1 className="text-xl font-bold text-white mb-1">StudyMaster</h1>
+        <p className="text-xs text-[#8e8e8e] mb-6">Select your student profile to start</p>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-lg text-sm text-center mb-6">
+          <div className="bg-[#1f1212] border border-[#552222] text-[#f87171] p-3 rounded text-xs mb-4 text-left">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-          {/* Charlie Profile */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Charlie */}
           <button
             onClick={() => handleProfileLogin('Charlie')}
             disabled={isLoading}
-            className="flex flex-col items-center p-6 rounded-2xl border-2 border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--accent-blue)] hover:bg-blue-500/10 transition-all duration-300 disabled:opacity-50 cursor-pointer"
+            className="flex flex-col items-center p-4 rounded-md border border-[#2f2f2f] bg-[#181818] hover:bg-[#242424] hover:border-[#4a4a4a] transition-colors cursor-pointer disabled:opacity-40"
           >
-            <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mb-4 border-2 border-blue-500/50">
-              <span className="text-3xl text-blue-400">👨‍🎓</span>
+            <div className="w-12 h-12 rounded-full bg-[#2a2a2a] text-white font-bold flex items-center justify-center mb-2 border border-[#3a3a3a] text-base">
+              C
             </div>
-            <span className="text-lg font-bold text-[var(--text-primary)]">Charlie</span>
+            <span className="text-sm font-medium text-white">Charlie</span>
             {isLoading && selectedUser === 'Charlie' && (
-              <div className="mt-2 text-sm text-blue-400 animate-pulse">Logging in...</div>
+              <span className="text-[10px] text-[#8e8e8e] mt-1">Connecting...</span>
             )}
           </button>
 
-          {/* Blessing Profile */}
+          {/* Blessing */}
           <button
             onClick={() => handleProfileLogin('blessing')}
             disabled={isLoading}
-            className="flex flex-col items-center p-6 rounded-2xl border-2 border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--accent-purple)] hover:bg-purple-500/10 transition-all duration-300 disabled:opacity-50 cursor-pointer"
+            className="flex flex-col items-center p-4 rounded-md border border-[#2f2f2f] bg-[#181818] hover:bg-[#242424] hover:border-[#4a4a4a] transition-colors cursor-pointer disabled:opacity-40"
           >
-            <div className="w-20 h-20 bg-purple-500/20 rounded-full flex items-center justify-center mb-4 border-2 border-purple-500/50">
-              <span className="text-3xl text-purple-400">👩‍🎓</span>
+            <div className="w-12 h-12 rounded-full bg-[#2a2a2a] text-white font-bold flex items-center justify-center mb-2 border border-[#3a3a3a] text-base">
+              B
             </div>
-            <span className="text-lg font-bold text-[var(--text-primary)]">Blessing</span>
+            <span className="text-sm font-medium text-white">Blessing</span>
             {isLoading && selectedUser === 'blessing' && (
-              <div className="mt-2 text-sm text-purple-400 animate-pulse">Logging in...</div>
+              <span className="text-[10px] text-[#8e8e8e] mt-1">Connecting...</span>
             )}
           </button>
         </div>

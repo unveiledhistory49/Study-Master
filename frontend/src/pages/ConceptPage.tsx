@@ -94,80 +94,74 @@ export default function ConceptPage() {
   if (!concept) {
     return (
       <ProtectedRoute>
-        <div className="text-center p-10">Concept not found</div>
+        <div className="text-center py-16 text-xs text-[#8e8e8e]">Concept not found</div>
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8 animate-fade-in">
-        <div className="mb-4 sm:mb-6 flex flex-wrap items-center text-sm gap-2">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Breadcrumb */}
+        <div className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-[#8e8e8e]">
+          <Link to="/" className="hover:text-white">
+            Dashboard
+          </Link>
+          <span>/</span>
           {subject && (
             <>
-              <Link
-                to={`/subjects/${subject.id}`}
-                className="text-[var(--text-muted)] hover:text-[var(--accent-blue)] transition-colors"
-              >
+              <Link to={`/subjects/${subject.id}`} className="hover:text-white">
                 {subject.name}
               </Link>
-              <span className="text-[var(--border-hover)]">/</span>
+              <span>/</span>
             </>
           )}
           {topic && (
             <>
-              <Link
-                to={`/topics/${topic.id}`}
-                className="text-[var(--text-muted)] hover:text-[var(--accent-blue)] transition-colors"
-              >
+              <Link to={`/topics/${topic.id}`} className="hover:text-white">
                 {topic.name}
               </Link>
-              <span className="text-[var(--border-hover)]">/</span>
+              <span>/</span>
             </>
           )}
-          <span className="text-[var(--text-primary)]">{concept.name}</span>
+          <span className="text-white truncate">{concept.name}</span>
         </div>
 
-        <div className="glass-panel p-3 sm:p-8 mb-8 relative w-full">
-          <div className="flex flex-wrap justify-between items-start gap-4 mb-4 sm:mb-6">
-            <h1 className="text-3xl font-bold text-[var(--text-primary)]">{concept.name}</h1>
+        {/* Concept Box */}
+        <div className="border border-[#2f2f2f] bg-[#121212] p-5 sm:p-6 rounded-md mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-[#242424]">
+            <h1 className="text-xl font-bold text-white">{concept.name}</h1>
 
-            <div className="flex gap-3">
-              <span className="bg-[var(--bg-secondary)] border border-[var(--border)] px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)] flex items-center gap-2">
-                ⏱️ ~{concept.estimated_time_minutes ?? concept.estimated_minutes ?? 30} mins
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-[#8e8e8e] border border-[#2f2f2f] px-2 py-0.5 rounded">
+                ⏱️ ~{concept.estimated_time_minutes ?? concept.estimated_minutes ?? 30}m
               </span>
-              <span className="bg-[var(--bg-secondary)] border border-[var(--border)] px-3 py-1.5 rounded-lg text-sm flex items-center gap-1">
-                Difficulty:
-                <span className="flex text-[var(--accent-amber)] ml-1">
-                  {[...Array(concept.difficulty)].map((_, i) => (
-                    <svg key={i} className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </span>
+              <span className="text-[11px] text-[#8e8e8e] border border-[#2f2f2f] px-2 py-0.5 rounded">
+                Difficulty: {concept.difficulty}/5
               </span>
             </div>
           </div>
 
-          <p className="text-[var(--text-secondary)] text-lg mb-8 leading-relaxed">
+          <p className="text-xs text-[#a1a1aa] mb-6 leading-relaxed">
             {concept.description}
           </p>
 
-          <div className="prose prose-invert max-w-none mb-10 relative">
-            <div className="flex justify-between items-center mb-4 border-b border-[var(--border)] pb-2">
-              <h3 className="text-xl font-semibold text-[var(--text-primary)] m-0">Content</h3>
+          {/* Content Area */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-[#242424]">
+              <span className="text-xs font-semibold text-white">Lesson Notes</span>
               {concept.content && (
                 <button
                   onClick={handleDownloadNotes}
-                  className="text-sm px-3 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--bg-card-hover)] text-[var(--text-primary)] border border-[var(--border)] rounded-md transition-colors cursor-pointer"
+                  className="text-xs text-[#8e8e8e] hover:text-white border border-[#2f2f2f] px-2.5 py-1 rounded cursor-pointer"
                 >
-                  Download Markdown
+                  Export Markdown
                 </button>
               )}
             </div>
 
             {concept.content ? (
-              <div className="chat-markdown text-[var(--text-secondary)] leading-loose">
+              <div className="chat-markdown text-sm text-[#d4d4d4] leading-relaxed">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeKatex]}
@@ -176,87 +170,45 @@ export default function ConceptPage() {
                 </ReactMarkdown>
               </div>
             ) : (
-              <div className="text-center py-16 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)]">
-                <div className="text-4xl mb-4">📚</div>
-                <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
-                  No learning material yet
+              <div className="text-center py-12 bg-[#181818] border border-[#242424] rounded-md">
+                <h3 className="text-sm font-semibold text-white mb-1">
+                  No learning material generated yet
                 </h3>
-                <p className="text-[var(--text-muted)] mb-6 max-w-md mx-auto">
-                  Click the button below to instantly generate an exhaustive, custom-tailored study guide
-                  for this topic using OpenCode Zen AI.
+                <p className="text-xs text-[#8e8e8e] max-w-sm mx-auto mb-4">
+                  Generate instant syllabus notes and formulas with OpenCode Zen AI.
                 </p>
                 <button
                   onClick={handleGenerateMaterial}
                   disabled={isGenerating}
-                  className="btn-primary inline-flex items-center gap-2"
+                  className="bg-white text-black text-xs font-semibold px-4 py-2 rounded hover:bg-[#e5e5e5] disabled:opacity-40 transition-colors cursor-pointer"
                 >
-                  {isGenerating ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Generating Material...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                        />
-                      </svg>
-                      Generate Study Material
-                    </>
-                  )}
+                  {isGenerating ? 'Generating Notes...' : 'Generate Study Material'}
                 </button>
               </div>
             )}
           </div>
 
-          {concept.prerequisites && (
-            <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-5 mb-8">
-              <h4 className="font-semibold text-[var(--text-primary)] mb-2 flex items-center gap-2">
-                <span>📚</span> Prerequisites
-              </h4>
-              <p className="text-[var(--text-secondary)] text-sm">
-                {typeof concept.prerequisites === 'string'
-                  ? concept.prerequisites
-                  : Array.isArray(concept.prerequisites)
-                  ? concept.prerequisites.map((p) => p.name).join(', ')
-                  : ''}
-              </p>
-            </div>
-          )}
-
           {concept.content && (
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-10 pt-6 border-t border-[var(--border)]">
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <span className="text-sm text-[var(--text-muted)]">Status:</span>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                    concept.mastery_status === 'Mastered'
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : concept.mastery_status === 'In progress'
-                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                      : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                  }`}
-                >
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-[#242424]">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-[#8e8e8e]">Mastery:</span>
+                <span className="text-white font-medium border border-[#2f2f2f] px-2 py-0.5 rounded">
                   {concept.mastery_status || 'Not started'}
                 </span>
               </div>
 
-              <div className="flex gap-4 w-full sm:w-auto">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => navigate(`/chat?concept_id=${concept.id}&start_quiz=true`)}
-                  className="btn-primary flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20 cursor-pointer"
+                  className="flex-1 sm:flex-none bg-white text-black text-xs font-semibold px-4 py-2 rounded hover:bg-[#e5e5e5] cursor-pointer"
                 >
-                  Done Studying (Take Quiz)
+                  Take Practice Quiz &rarr;
                 </button>
                 <button
                   onClick={() => navigate(`/chat?concept_id=${concept.id}`)}
-                  className="btn-secondary flex-1 sm:flex-none flex items-center justify-center gap-2 text-[var(--text-primary)] cursor-pointer"
+                  className="flex-1 sm:flex-none border border-[#2f2f2f] bg-[#181818] text-white text-xs font-semibold px-4 py-2 rounded hover:bg-[#242424] cursor-pointer"
                 >
-                  <span>💬</span> Discuss with AI
+                  Ask AI Tutor
                 </button>
               </div>
             </div>
