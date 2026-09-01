@@ -382,20 +382,6 @@ export default function ChatPage() {
                     onUpdateStreak={(newStreak) => setQuizPassStreak(newStreak)}
                   />
                 ))}
-
-                {isLoading && (
-                  <div className="w-full py-4 bg-[#000000] border-b border-[#1f1f1f]">
-                    <div className="max-w-3xl mx-auto px-4 flex gap-4">
-                      <div className="w-6 h-6 rounded bg-white text-black text-xs font-bold flex items-center justify-center">
-                        AI
-                      </div>
-                      <div className="flex items-center gap-1.5 py-1 text-[#8e8e8e] text-xs">
-                        <span>Thinking</span>
-                        <span className="animate-pulse">...</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 <div ref={messagesEndRef} />
               </div>
             )}

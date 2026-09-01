@@ -160,9 +160,14 @@ function ChatMessageComponent({
             <div className="text-sm text-white whitespace-pre-wrap leading-relaxed">
               {message.content}
             </div>
-          ) : (
+          ) : message.content ? (
             <div className="chat-markdown text-sm text-[#e5e5e5] leading-relaxed">
               {parsedMarkdown}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 py-1 text-[#8e8e8e] text-xs font-mono">
+              <span>Thinking</span>
+              <span className="animate-pulse">...</span>
             </div>
           )}
         </div>
