@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import CramSheetView from '@/components/CramSheetView';
+import StageDrillArena from '@/components/StageDrillArena';
+import TopicMistakeBank from '@/components/TopicMistakeBank';
 import { api } from '@/lib/api';
-import { Concept } from '@/lib/types';
-
+import { Concept, CramSheetData, UserStageProgressResponse } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -12,59 +14,88 @@ import rehypeKatex from 'rehype-katex';
 
 export default function ConceptPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'cram';
   const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState<'cram' | 'drill' | 'mistakes' | 'notes'>(
+    (initialTab as any) || 'cram'
+  );
   const [concept, setConcept] = useState<Concept | null>(null);
-  const [isLoading, setIsLoading] = useState(!concept);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [cramSheet, setCramSheet] = useState<CramSheetData | null>(null);
+  const [progress, setProgress] = useState<UserStageProgressResponse | null>(null);
+  const [drillStageToLaunch, setDrillStageToLaunch] = useState<number>(1);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingCram, setIsLoadingCram] = useState(false);
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+
+  const conceptId = id ? parseInt(id, 10) : 0;
+
+  const loadData = useCallback(async () => {
+    if (!conceptId) return;
+    try {
+      const [conceptData, progressData] = await Promise.all([
+        api.getConcept(conceptId),
+        api.getStageProgress(conceptId),
+      ]);
+      setConcept(conceptData);
+      setProgress(progressData);
+    } catch (err) {
+      console.error('Failed to load concept data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [conceptId]);
 
   useEffect(() => {
-    if (!id) return;
-    let isMounted = true;
-    const fetchConcept = async () => {
-      try {
-        const conceptData = await api.getConcept(id);
-        if (isMounted) setConcept(conceptData);
-      } catch (error) {
-        console.error('Failed to fetch concept:', error);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
+    loadData();
+  }, [loadData]);
 
-    fetchConcept();
-    return () => {
-      isMounted = false;
-    };
-  }, [id]);
+  // Load cram sheet when cram tab is active
+  const loadCramSheet = useCallback(async () => {
+    if (!conceptId || cramSheet) return;
+    setIsLoadingCram(true);
+    try {
+      const sheet = await api.getCramSheet(conceptId);
+      setCramSheet(sheet);
+    } catch (err) {
+      console.error('Failed to load cram sheet:', err);
+    } finally {
+      setIsLoadingCram(false);
+    }
+  }, [conceptId, cramSheet]);
+
+  useEffect(() => {
+    if (activeTab === 'cram') {
+      loadCramSheet();
+    }
+  }, [activeTab, loadCramSheet]);
+
+  const handleTabChange = (tab: 'cram' | 'drill' | 'mistakes' | 'notes') => {
+    setActiveTab(tab);
+    setSearchParams({ tab }, { replace: true });
+  };
+
+  const handleLaunchDrillFromCram = (stage: number) => {
+    setDrillStageToLaunch(stage);
+    handleTabChange('drill');
+  };
 
   const handleGenerateMaterial = async () => {
     if (!concept) return;
-    setIsGenerating(true);
+    setIsGeneratingNotes(true);
     try {
-      const updatedConcept = await api.generateMaterial(concept.id);
-      setConcept(updatedConcept);
+      const updated = await api.generateMaterial(concept.id);
+      setConcept((prev) => (prev ? { ...prev, content: updated.content } : null));
     } catch (err) {
       console.error('Failed to generate material:', err);
-      alert('Failed to generate material. Please try again.');
+      alert('Failed to generate study material. Please try again.');
     } finally {
-      setIsGenerating(false);
+      setIsGeneratingNotes(false);
     }
   };
 
-  const handleDownloadNotes = () => {
-    if (!concept?.content) return;
-    const blob = new Blob([concept.content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${concept.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_notes.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // Pre-process content for markdown math
   const processContent = (text: string): string => {
     let result = text.replace(/\\\(([\s\S]+?)\\\)/g, (_, expr) => `$${expr}$`);
     result = result.replace(/\\\[([\s\S]+?)\\\]/g, (_, expr) => `$$${expr}$$`);
@@ -75,22 +106,40 @@ export default function ConceptPage() {
     return result;
   };
 
+  if (isLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="max-w-4xl mx-auto px-4 py-16 flex justify-center">
+          <LoadingSpinner />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (!concept || !progress) {
+    return (
+      <ProtectedRoute>
+        <div className="max-w-4xl mx-auto px-4 py-16 text-center text-xs text-[#8e8e8e]">
+          Concept not found. <Link to="/" className="text-white underline">Back to Dashboard</Link>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
         {/* Breadcrumb */}
-        <div className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-[#8e8e8e]">
-          <Link to="/" className="hover:text-white">
-            Dashboard
-          </Link>
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#8e8e8e]">
+          <Link to="/" className="hover:text-white">Dashboard</Link>
           <span>/</span>
-          {concept?.subject_name && (
+          {concept.subject_name && (
             <>
               <span className="text-[#a1a1aa]">{concept.subject_name}</span>
               <span>/</span>
             </>
           )}
-          {concept?.topic_id && (
+          {concept.topic_id && (
             <>
               <Link to={`/topics/${concept.topic_id}`} className="hover:text-white">
                 {concept.topic_name || 'Topic'}
@@ -98,97 +147,203 @@ export default function ConceptPage() {
               <span>/</span>
             </>
           )}
-          <span className="text-white truncate">{concept?.name || 'Concept'}</span>
+          <span className="text-white truncate">{concept.name}</span>
         </div>
 
-        {isLoading && !concept ? (
-          <LoadingSpinner />
-        ) : !concept ? (
-          <div className="text-center py-16 text-xs text-[#8e8e8e]">Concept not found</div>
-        ) : (
-          <div className="border border-[#2f2f2f] bg-[#121212] p-5 sm:p-6 rounded-md mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-[#242424]">
-              <h1 className="text-xl font-bold text-white">{concept.name}</h1>
-
+        {/* Persistent 350+ Stage Mastery Header */}
+        <div className="p-4 sm:p-5 bg-[#121212] border border-[#242424] rounded-lg space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#8e8e8e] border border-[#2f2f2f] px-2 py-0.5 rounded">
-                  ⏱️ ~{concept.estimated_time_minutes ?? concept.estimated_minutes ?? 30}m
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1c1c1c] text-[#a1a1aa] border border-[#2c2c2c]">
+                  UTME Weight: {concept.utme_weight || 1.0}x
                 </span>
-                <span className="text-[11px] text-[#8e8e8e] border border-[#2f2f2f] px-2 py-0.5 rounded">
+                <span className="text-[10px] font-mono text-[#8e8e8e]">
                   Difficulty: {concept.difficulty}/5
                 </span>
               </div>
+              <h1 className="text-xl font-bold text-white mt-1">{concept.name}</h1>
             </div>
 
-            <p className="text-xs text-[#a1a1aa] mb-6 leading-relaxed">
-              {concept.description}
-            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate(`/chat?concept_id=${concept.id}`)}
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-[#1a1a1a] hover:bg-[#242424] border border-[#333333] rounded-md transition-colors cursor-pointer"
+              >
+                💬 Ask AI Tutor
+              </button>
+            </div>
+          </div>
 
-            {/* Content Area */}
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-3 pb-2 border-b border-[#242424]">
-                <span className="text-xs font-semibold text-white">Lesson Notes</span>
-                {concept.content && (
-                  <button
-                    onClick={handleDownloadNotes}
-                    className="text-xs text-[#8e8e8e] hover:text-white border border-[#2f2f2f] px-2.5 py-1 rounded cursor-pointer"
-                  >
-                    Export Markdown
-                  </button>
-                )}
+          {/* Stage Progress Badges & Metrics Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#1f1f1f] text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-[#8e8e8e]">Stage Mastery:</span>
+              <span
+                className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold border ${
+                  progress.stage1_passed
+                    ? 'bg-green-950 text-green-400 border-green-800'
+                    : 'bg-[#181818] text-[#777777] border-[#2c2c2c]'
+                }`}
+              >
+                S1: Foundation {progress.stage1_passed ? '✓' : 'Pending'}
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold border ${
+                  progress.stage2_passed
+                    ? 'bg-green-950 text-green-400 border-green-800'
+                    : 'bg-[#181818] text-[#777777] border-[#2c2c2c]'
+                }`}
+              >
+                S2: UTME {progress.stage2_passed ? '✓' : 'Locked'}
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold border ${
+                  progress.stage3_passed
+                    ? 'bg-green-950 text-green-400 border-green-800'
+                    : 'bg-[#181818] text-[#777777] border-[#2c2c2c]'
+                }`}
+              >
+                S3: 350+ Elite {progress.stage3_passed ? '✓' : 'Locked'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 text-[11px] font-mono">
+              <span className="text-[#8e8e8e]">
+                Speed: <strong className="text-white">{progress.avg_latency_seconds ? `${progress.avg_latency_seconds}s` : '—'}</strong>
+              </span>
+              <span className="text-[#8e8e8e]">
+                Red Book:{' '}
+                <strong className={progress.active_mistakes_count > 0 ? 'text-red-400' : 'text-green-400'}>
+                  {progress.active_mistakes_count} Mistakes
+                </strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3-Tab Workspace Navigation */}
+        <div className="flex items-center gap-1 border-b border-[#242424] pb-0 text-xs font-semibold">
+          <button
+            onClick={() => handleTabChange('cram')}
+            className={`
+              px-4 py-2.5 rounded-t-lg transition-colors cursor-pointer border-t border-x
+              ${
+                activeTab === 'cram'
+                  ? 'bg-[#121212] text-white border-[#242424] border-b-transparent font-bold'
+                  : 'bg-transparent text-[#8e8e8e] hover:text-white border-transparent'
+              }
+            `}
+          >
+            📋 1. High-Yield Cram Sheet
+          </button>
+          <button
+            onClick={() => handleTabChange('drill')}
+            className={`
+              px-4 py-2.5 rounded-t-lg transition-colors cursor-pointer border-t border-x
+              ${
+                activeTab === 'drill'
+                  ? 'bg-[#121212] text-white border-[#242424] border-b-transparent font-bold'
+                  : 'bg-transparent text-[#8e8e8e] hover:text-white border-transparent'
+              }
+            `}
+          >
+            🎯 2. 3-Stage Drill Arena
+          </button>
+          <button
+            onClick={() => handleTabChange('mistakes')}
+            className={`
+              px-4 py-2.5 rounded-t-lg transition-colors cursor-pointer border-t border-x relative
+              ${
+                activeTab === 'mistakes'
+                  ? 'bg-[#121212] text-white border-[#242424] border-b-transparent font-bold'
+                  : 'bg-transparent text-[#8e8e8e] hover:text-white border-transparent'
+              }
+            `}
+          >
+            📕 3. Topic Red Book
+            {progress.active_mistakes_count > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-red-950 text-red-400 border border-red-800 text-[10px]">
+                {progress.active_mistakes_count}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => handleTabChange('notes')}
+            className={`
+              px-4 py-2.5 rounded-t-lg transition-colors cursor-pointer border-t border-x
+              ${
+                activeTab === 'notes'
+                  ? 'bg-[#121212] text-white border-[#242424] border-b-transparent font-bold'
+                  : 'bg-transparent text-[#8e8e8e] hover:text-white border-transparent'
+              }
+            `}
+          >
+            📖 Full Lesson Notes
+          </button>
+        </div>
+
+        {/* Tab 1: High-Yield Cram Sheet */}
+        {activeTab === 'cram' && (
+          <div>
+            {isLoadingCram ? (
+              <div className="p-12 text-center text-xs text-[#8e8e8e] bg-[#121212] border border-[#242424] rounded-lg">
+                Generating High-Yield Cram Sheet & Cheat Codes...
               </div>
+            ) : cramSheet ? (
+              <CramSheetView cramSheet={cramSheet} onLaunchDrill={handleLaunchDrillFromCram} />
+            ) : (
+              <div className="p-8 text-center text-xs text-[#8e8e8e] bg-[#121212] border border-[#242424] rounded-lg">
+                Cram Sheet not available.
+              </div>
+            )}
+          </div>
+        )}
 
-              {concept.content ? (
-                <div className="chat-markdown text-sm text-[#d4d4d4] leading-relaxed">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm, remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                  >
-                    {processContent(concept.content)}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-[#181818] border border-[#242424] rounded-md">
-                  <h3 className="text-sm font-semibold text-white mb-1">
-                    No learning material generated yet
-                  </h3>
-                  <p className="text-xs text-[#8e8e8e] max-w-sm mx-auto mb-4">
-                    Generate instant syllabus notes and formulas with OpenCode Zen AI.
-                  </p>
-                  <button
-                    onClick={handleGenerateMaterial}
-                    disabled={isGenerating}
-                    className="bg-white text-black text-xs font-semibold px-4 py-2 rounded hover:bg-[#e5e5e5] disabled:opacity-40 transition-colors cursor-pointer"
-                  >
-                    {isGenerating ? 'Generating Notes...' : 'Generate Study Material'}
-                  </button>
-                </div>
+        {/* Tab 2: 3-Stage Drill Arena */}
+        {activeTab === 'drill' && (
+          <StageDrillArena
+            conceptId={concept.id}
+            progress={progress}
+            initialStage={drillStageToLaunch}
+            onProgressUpdated={loadData}
+            onOpenMistakeBank={() => handleTabChange('mistakes')}
+          />
+        )}
+
+        {/* Tab 3: Topic Red Book / Mistake Bank */}
+        {activeTab === 'mistakes' && (
+          <TopicMistakeBank
+            conceptId={concept.id}
+            onMistakeResolved={loadData}
+          />
+        )}
+
+        {/* Tab 4: Full Lesson Notes (Fallback / Deep Reference) */}
+        {activeTab === 'notes' && (
+          <div className="p-5 sm:p-6 bg-[#121212] border border-[#242424] rounded-lg space-y-4">
+            <div className="flex items-center justify-between border-b border-[#242424] pb-3">
+              <span className="text-xs font-bold text-white uppercase tracking-wider">Reference Textbook Notes</span>
+              {!concept.content && (
+                <button
+                  onClick={handleGenerateMaterial}
+                  disabled={isGeneratingNotes}
+                  className="px-3 py-1.5 text-xs font-semibold text-black bg-white hover:bg-[#e5e5e5] rounded cursor-pointer"
+                >
+                  {isGeneratingNotes ? 'Generating...' : 'Generate Full Notes'}
+                </button>
               )}
             </div>
 
-            {concept.content && (
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-[#242424]">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-[#8e8e8e]">Mastery:</span>
-                  <span className="text-white font-medium border border-[#2f2f2f] px-2 py-0.5 rounded">
-                    {concept.mastery_status || 'Not started'}
-                  </span>
-                </div>
-
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => navigate(`/chat?concept_id=${concept.id}&start_quiz=true`)}
-                    className="flex-1 sm:flex-none bg-white text-black text-xs font-semibold px-4 py-2 rounded hover:bg-[#e5e5e5] cursor-pointer"
-                  >
-                    Take Practice Quiz &rarr;
-                  </button>
-                  <button
-                    onClick={() => navigate(`/chat?concept_id=${concept.id}`)}
-                    className="flex-1 sm:flex-none border border-[#2f2f2f] bg-[#181818] text-white text-xs font-semibold px-4 py-2 rounded hover:bg-[#242424] cursor-pointer"
-                  >
-                    Ask AI Tutor
-                  </button>
-                </div>
+            {concept.content ? (
+              <div className="chat-markdown text-sm text-[#d4d4d4] leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+                  {processContent(concept.content)}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-xs text-[#8e8e8e]">
+                No full lesson notes stored yet. Click 'Generate Full Notes' to synthesize detailed textbook material.
               </div>
             )}
           </div>

@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import init_db, close_db
 from app.seed import seed_database
-from app.api import auth, subjects, topics, concepts, profile, chat
+from app.api import auth, subjects, topics, concepts, profile, chat, drills, mistakes, analytics
 from app.services.ai_service import ai_service
 from app.config import settings
 
@@ -53,6 +53,9 @@ app.include_router(topics.router)
 app.include_router(concepts.router)
 app.include_router(profile.router)
 app.include_router(chat.router)
+app.include_router(drills.router)
+app.include_router(mistakes.router)
+app.include_router(analytics.router)
 
 
 @app.get("/api/health")

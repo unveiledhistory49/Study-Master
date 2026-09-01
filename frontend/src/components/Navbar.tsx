@@ -28,23 +28,33 @@ export default function Navbar() {
           <nav className="hidden sm:flex items-center space-x-1">
             <Link
               to="/"
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 location.pathname === '/'
-                  ? 'bg-[#181818] text-white'
+                  ? 'bg-[#181818] text-white font-semibold'
                   : 'text-[#8e8e8e] hover:text-white hover:bg-[#181818]'
               }`}
             >
               Dashboard
             </Link>
             <Link
-              to="/chat"
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                location.pathname === '/chat'
-                  ? 'bg-[#181818] text-white'
+              to="/mistakes"
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                location.pathname === '/mistakes'
+                  ? 'bg-[#181818] text-white font-semibold'
                   : 'text-[#8e8e8e] hover:text-white hover:bg-[#181818]'
               }`}
             >
-              AI Tutor
+              📕 Red Book
+            </Link>
+            <Link
+              to="/chat"
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                location.pathname === '/chat'
+                  ? 'bg-[#181818] text-white font-semibold'
+                  : 'text-[#8e8e8e] hover:text-white hover:bg-[#181818]'
+              }`}
+            >
+              💬 AI Tutor
             </Link>
           </nav>
         </div>

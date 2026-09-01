@@ -30,6 +30,7 @@ class Concept(Base):
     estimated_time_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
     order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cram_sheet: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     quiz_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

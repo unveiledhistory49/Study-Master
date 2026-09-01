@@ -6,6 +6,8 @@ from app.models.profile import StudentProfile
 from app.models.session import StudySession
 from app.models.chat import ChatMessage
 from app.models.conversation import Conversation
+from app.models.stage_progress import UserStageProgress
+from app.models.mistake import MistakeBankItem
 
 __all__ = [
     "User",
@@ -17,4 +19,6 @@ __all__ = [
     "StudySession",
     "ChatMessage",
     "Conversation",
+    "UserStageProgress",
+    "MistakeBankItem",
 ]

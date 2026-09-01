@@ -7,6 +7,7 @@ import SubjectPage from '@/pages/SubjectPage';
 import TopicPage from '@/pages/TopicPage';
 import ConceptPage from '@/pages/ConceptPage';
 import ChatPage from '@/pages/ChatPage';
+import MistakesPage from '@/pages/MistakesPage';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/subjects/:id" element={<SubjectPage />} />
             <Route path="/topics/:id" element={<TopicPage />} />
             <Route path="/concepts/:id" element={<ConceptPage />} />
+            <Route path="/mistakes" element={<MistakesPage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

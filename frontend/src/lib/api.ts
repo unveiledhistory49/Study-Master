@@ -1,130 +1,135 @@
-import { getToken, removeToken } from './auth';
-import { User, Subject, Topic, Concept, Profile, ChatMessage, Conversation } from './types';
+import {
+  User,
+  Subject,
+  Topic,
+  Concept,
+  Profile,
+  ChatMessage,
+  Conversation,
+  CramSheetData,
+  DrillResponse,
+  DrillSubmission,
+  DrillResultResponse,
+  UserStageProgressResponse,
+  MistakeItemResponse,
+  MistakeAttemptResult,
+  ReadinessResponse,
+} from './types';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+const API_BASE_URL = '/api';
 
 export class ApiError extends Error {
-  status: number;
-  constructor(message: string, status: number) {
+  constructor(public message: string, public status: number) {
     super(message);
-    this.status = status;
+    this.name = 'ApiError';
   }
 }
 
-// In-memory SWR cache for instant navigation
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-}
+const getToken = (): string | null => {
+  return localStorage.getItem('token');
+};
 
-const memoryCache = new Map<string, CacheEntry<unknown>>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+const memoryCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL_MS = 60 * 1000;
 
-async function fetchWithAuth<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export const clearApiCache = (keyPrefix?: string) => {
+  if (!keyPrefix) {
+    memoryCache.clear();
+  } else {
+    for (const key of memoryCache.keys()) {
+      if (key.startsWith(keyPrefix)) {
+        memoryCache.delete(key);
+      }
+    }
+  }
+};
+
+const fetchWithAuth = async <T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> => {
   const token = getToken();
+  const headers = new Headers(options.headers || {});
+  headers.set('Content-Type', 'application/json');
 
-  const headers = new Headers(options.headers);
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
-    headers.set('Content-Type', 'application/json');
-  }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-  let response: Response;
-  try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-      signal: controller.signal,
-    });
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new ApiError('Request timed out. Please try again.', 408);
-    }
-    throw err;
-  }
-  clearTimeout(timeoutId);
-
-  if (response.status === 401) {
-    removeToken();
-    memoryCache.clear();
-    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-      window.location.href = '/login';
-    }
-  }
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(errorData.detail || 'API request failed', response.status);
+    throw new ApiError(
+      errorData.detail || errorData.message || 'An error occurred',
+      response.status
+    );
   }
 
   return response.json();
-}
+};
 
-/**
- * Fetch with in-memory caching for instant 0ms responses on subsequent visits
- */
-async function fetchCached<T>(endpoint: string, forceFresh = false): Promise<T> {
-  const cacheKey = endpoint;
+const fetchCached = async <T>(endpoint: string, forceFresh = false): Promise<T> => {
   const now = Date.now();
-
-  if (!forceFresh && memoryCache.has(cacheKey)) {
-    const entry = memoryCache.get(cacheKey) as CacheEntry<T>;
-    if (now - entry.timestamp < CACHE_TTL_MS) {
-      return entry.data;
-    }
+  const cached = memoryCache.get(endpoint);
+  if (!forceFresh && cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data as T;
   }
-
   const data = await fetchWithAuth<T>(endpoint);
-  memoryCache.set(cacheKey, { data, timestamp: now });
+  memoryCache.set(endpoint, { data, timestamp: now });
   return data;
-}
+};
 
 export const api = {
-  clearCache: (prefix?: string) => {
-    if (!prefix) {
-      memoryCache.clear();
-    } else {
-      for (const key of memoryCache.keys()) {
-        if (key.startsWith(prefix)) {
-          memoryCache.delete(key);
-        }
-      }
-    }
-  },
-
-  login: async (data: Record<string, string>): Promise<{ access_token: string; token_type: string }> => {
-    memoryCache.clear();
-    return fetchWithAuth<{ access_token: string; token_type: string }>('/auth/login', {
+  login: (data: { username: string; password?: string }): Promise<{ access_token: string; user?: User }> =>
+    fetchWithAuth<{ access_token: string; user?: User }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
-    });
-  },
+    }),
 
-  getMe: (forceFresh = false): Promise<User> => fetchCached<User>('/auth/me', forceFresh),
+  register: (data: { username: string; password?: string; email?: string }): Promise<{ access_token: string; user?: User }> =>
+    fetchWithAuth<{ access_token: string; user?: User }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
-  getSubjects: (forceFresh = false): Promise<Subject[]> => fetchCached<Subject[]>('/subjects', forceFresh),
+  getMe: (): Promise<User> => fetchWithAuth<User>('/auth/me'),
+
+  clearCache: (keyPrefix?: string) => clearApiCache(keyPrefix),
+
+  getSubjects: (forceFresh = false): Promise<Subject[]> =>
+    fetchCached<Subject[]>('/subjects', forceFresh),
 
   getSubject: (id: string | number, forceFresh = false): Promise<Subject> =>
     fetchCached<Subject>(`/subjects/${id}`, forceFresh),
 
+  getTopics: (subjectId: string | number, forceFresh = false): Promise<Topic[]> =>
+    fetchCached<Topic[]>(`/topics/subject/${subjectId}`, forceFresh),
+
   getTopic: (id: string | number, forceFresh = false): Promise<Topic> =>
     fetchCached<Topic>(`/topics/${id}`, forceFresh),
+
+  getConcepts: (topicId: string | number, forceFresh = false): Promise<Concept[]> =>
+    fetchCached<Concept[]>(`/concepts/topic/${topicId}`, forceFresh),
 
   getConcept: (id: string | number, forceFresh = false): Promise<Concept> =>
     fetchCached<Concept>(`/concepts/${id}`, forceFresh),
 
-  generateMaterial: async (id: string | number): Promise<Concept> => {
-    memoryCache.delete(`/concepts/${id}`);
-    return fetchWithAuth<Concept>(`/concepts/${id}/generate-material`, { method: 'POST' });
+  generateMaterial: async (conceptId: string | number): Promise<{ content: string }> => {
+    memoryCache.delete(`/concepts/${conceptId}`);
+    return fetchWithAuth<{ content: string }>(`/concepts/${conceptId}/generate`, {
+      method: 'POST',
+    });
   },
 
-  getProfiles: (forceFresh = false): Promise<Profile[]> => fetchCached<Profile[]>('/profile', forceFresh),
+  getProfile: (forceFresh = false): Promise<Profile[]> =>
+    fetchCached<Profile[]>('/profile', forceFresh),
+
+  getRecommendations: (forceFresh = false): Promise<Concept[]> =>
+    fetchCached<Concept[]>('/profile/recommendations', forceFresh),
 
   chat: (data: { message: string; subject_id?: number; concept_id?: number; conversation_id?: number }) =>
     fetchWithAuth('/ai/chat', {
@@ -205,9 +210,57 @@ export const api = {
   updateMastery: async (concept_id: string | number, passed: boolean) => {
     memoryCache.delete('/profile');
     memoryCache.delete(`/concepts/${concept_id}`);
+    memoryCache.delete('/analytics/readiness');
     return fetchWithAuth(`/profile/mastery/${concept_id}`, {
       method: 'POST',
       body: JSON.stringify({ passed }),
     });
   },
+
+  // 350+ UTME Drill System Endpoints
+  getStageProgress: (conceptId: number | string): Promise<UserStageProgressResponse> =>
+    fetchWithAuth<UserStageProgressResponse>(`/drills/progress/${conceptId}`),
+
+  getCramSheet: (conceptId: number | string): Promise<CramSheetData> =>
+    fetchWithAuth<CramSheetData>(`/drills/cram-sheet/${conceptId}`),
+
+  generateDrill: (conceptId: number | string, stage: number): Promise<DrillResponse> =>
+    fetchWithAuth<DrillResponse>(`/drills/generate?concept_id=${conceptId}&stage=${stage}`, {
+      method: 'POST',
+    }),
+
+  submitDrill: async (data: DrillSubmission): Promise<DrillResultResponse> => {
+    memoryCache.delete('/analytics/readiness');
+    return fetchWithAuth<DrillResultResponse>('/drills/submit', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Mistake Bank ('Red Book') Endpoints
+  getMistakes: (conceptId?: number, subjectId?: number, resolved = false): Promise<MistakeItemResponse[]> => {
+    const params = new URLSearchParams();
+    if (conceptId) params.append('concept_id', conceptId.toString());
+    if (subjectId) params.append('subject_id', subjectId.toString());
+    if (resolved) params.append('resolved', 'true');
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return fetchWithAuth<MistakeItemResponse[]>(`/mistakes${query}`);
+  },
+
+  attemptMistake: async (mistakeId: number, selectedIndex: number): Promise<MistakeAttemptResult> => {
+    memoryCache.delete('/analytics/readiness');
+    return fetchWithAuth<MistakeAttemptResult>(`/mistakes/${mistakeId}/attempt`, {
+      method: 'POST',
+      body: JSON.stringify({ selected_index: selectedIndex }),
+    });
+  },
+
+  getMistakeVariant: (mistakeId: number): Promise<any> =>
+    fetchWithAuth<any>(`/mistakes/${mistakeId}/variant`, {
+      method: 'POST',
+    }),
+
+  // Readiness & Syllabus Heatmap
+  getReadinessAnalytics: (forceFresh = false): Promise<ReadinessResponse> =>
+    fetchCached<ReadinessResponse>('/analytics/readiness', forceFresh),
 };
