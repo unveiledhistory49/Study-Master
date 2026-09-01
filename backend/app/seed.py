@@ -92,7 +92,7 @@ BIOLOGY_TOPICS = [
             {"name": "Recognising Living Things", "description": "Characteristics of living organisms and how to identify them", "difficulty": 1, "importance": 4, "utme_weight": 2.0, "time": 20},
             {"name": "Classification of Living Things", "description": "Taxonomy, systematic grouping, and the kingdoms of life", "difficulty": 2, "importance": 5, "utme_weight": 3.0, "time": 30},
             {"name": "Organisation of Life", "description": "Levels of organization from cells to biosphere", "difficulty": 1, "importance": 3, "utme_weight": 2.0, "time": 15},
-            {"name": "The Cell", "description": "Structure, organelles, and types of cells", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 45, "content": CELL_CONTENT, "quiz_data": CELL_QUIZ},
+            {"name": "The Cell", "description": "Structure, organelles, and types of cells", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 45},
             {"name": "The Cell and Its Environment", "description": "Osmosis, diffusion, and active transport", "difficulty": 2, "importance": 4, "utme_weight": 3.0, "time": 25},
             {"name": "Some Properties and Functions of the Cell", "description": "Cellular respiration, growth, and cell division", "difficulty": 3, "importance": 5, "utme_weight": 4.0, "time": 40},
         ],
