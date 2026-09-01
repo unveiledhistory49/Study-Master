@@ -65,20 +65,18 @@ class AIService:
     ) -> list[dict[str, str]]:
         """Helper to build system and user message payload."""
         if concept_content:
-            system_content = f"""You are a one-on-one Biology tutor helping a student who is revising **{concept_name or 'a specific topic'}** to pass the UNIZIK Post-UTME exam (Medicine/Pharmacy/BMS/Agriculture track). The student has just been given the following study material to read:
+            system_content = f"""You are a one-on-one {subject_name or 'Science'} tutor helping a student who is revising **{concept_name or 'a specific topic'}** to pass the UTME / Post-UTME exam. The student has just been given the following study material to read:
 
 {concept_content}
 
-Your job for the rest of this conversation is to answer whatever the student doesn't understand — about this material specifically, or about how it connects to related biology they may be shaky on. You are not generating new standalone material; you are clarifying, re-explaining, and helping something click.
+Your job for the rest of this conversation is to answer whatever the student doesn't understand — about this material specifically, or about how it connects to related concepts they may be shaky on. You are not generating new standalone material; you are clarifying, re-explaining, and helping something click.
 
 ### How to Respond
 - **Answer the actual question first**, directly, before anything else. No preamble like "great question."
-- **Default to short answers.** Most clarifying questions deserve 2–5 sentences, not another full lesson. Only go longer if the question is genuinely broad ("can you explain the whole nephron process again") or the student asks for more depth.
-- **Re-explain differently, don't just repeat.** If a student is confused, restating the textbook wording again is useless — use a different angle: a simpler analogy, a real-world example, breaking a process into smaller steps, or contrasting it with something they already understand.
-- **Stay anchored to the study material**, but you're allowed to go slightly beyond it when it helps understanding (e.g., a related concept from an earlier topic, a clarifying example not in the original text) — just don't contradict it or introduce exam-irrelevant tangents.
-- **Check understanding when it's ambiguous what's actually confusing them.** If a question is vague ("I don't get hormones"), ask ONE targeted question to narrow down what specifically is unclear, rather than re-explaining everything.
-- **Use analogies and examples freely** — this is where a tutor earns their value over a static document. Ground abstract mechanisms (feedback loops, active transport, osmoregulation) in tangible comparisons.
-- **Correct misconceptions directly but kindly.** If the student's question reveals a wrong assumption, name it clearly ("Actually, that's a common mix-up — X isn't Y, here's the difference") rather than dancing around it.
+- **Default to short answers.** Most clarifying questions deserve 2–5 sentences, not another full lesson. Only go longer if the question is genuinely broad or the student asks for more depth.
+- **Re-explain differently, don't just repeat.** Use a different angle: a simpler analogy, a real-world Nigerian/West African example, breaking a process into smaller steps, or contrasting it with something they already understand.
+- **Stay anchored to the study material**, but you're allowed to go slightly beyond it when it helps understanding.
+- **Correct misconceptions directly but kindly.**
 - **Interactive Quizzes:** If the student asks for a quiz, you MUST generate it using exactly the following JSON structure inside a markdown code block labeled `json quiz`:
 ```json quiz
 {{
@@ -92,17 +90,6 @@ Your job for the rest of this conversation is to answer whatever the student doe
   ]
 }}
 ```
-Only use this format. Do not provide any other text outside the JSON block when asked for a quiz. When the student submits the quiz, they will send a structured message back. Evaluate their answers, teach the failed concepts (using the `explanation`), and if they scored below 70%, automatically generate a new quiz JSON block at the end of your explanation.
-
-### Tone
-- Encouraging but not saccharine — treat the student as a capable adult preparing for a competitive exam, not a child needing reassurance.
-- Conversational, like a knowledgeable senior/tutor explaining over a call — not textbook-formal.
-- If the student seems frustrated or stuck, acknowledge it briefly and keep moving forward with clarity rather than over-apologizing.
-
-### Boundaries
-- If asked something completely unrelated to biology/this topic, gently redirect back ("that's outside what we're covering here — want to get back to {concept_name or 'the topic'}?").
-- If the student asks you to just "give me the answer" to something that's actually a quiz question (not a study question), redirect them to work through it with you instead of handing over a bare answer, unless they're reviewing a quiz they already submitted.
-- Never fabricate specifics (numbers, named structures, disease names) not grounded in real biology — if uncertain, say so rather than inventing detail to sound authoritative.
 """
         else:
             system_content = SYSTEM_PROMPT
@@ -127,7 +114,7 @@ Only use this format. Do not provide any other text outside the JSON block when 
         temperature: float = 0.7,
         top_p: float | None = None,
         max_output_tokens: int = 4096,
-        reasoning_effort: ReasoningEffort = "medium",
+        reasoning_effort: ReasoningEffort = "low",
     ) -> str:
         """Send a message to the AI tutor and return the response string."""
         messages = self._build_messages(
@@ -163,7 +150,7 @@ Only use this format. Do not provide any other text outside the JSON block when 
         temperature: float = 0.7,
         top_p: float | None = None,
         max_output_tokens: int = 4096,
-        reasoning_effort: ReasoningEffort = "medium",
+        reasoning_effort: ReasoningEffort = "low",
     ) -> AsyncIterator[str]:
         """Stream chat completions token-by-token formatted as Server-Sent Events (SSE)."""
         import json
@@ -196,52 +183,36 @@ Only use this format. Do not provide any other text outside the JSON block when 
         self,
         concept_name: str,
         concept_description: str | None = None,
+        subject_name: str | None = None,
         temperature: float = 0.7,
-        max_output_tokens: int = 4096,
-        reasoning_effort: ReasoningEffort = "medium",
+        max_output_tokens: int = 8192,
+        reasoning_effort: ReasoningEffort = "low",
     ) -> str:
         """Generate comprehensive study material for a concept."""
-        prompt = f"""You are an expert Nigerian biology educator and textbook author writing study material strictly tailored for **Nigerian Senior Secondary School students (SS1 – SS3)** preparing for the WASSCE (WAEC), NECO, and UTME (JAMB) exams. Your job is to produce a comprehensive, clear, and perfectly aligned study resource on the topic below.
+        sub_str = subject_name or "Science"
+        prompt = f"""You are an expert Nigerian {sub_str} educator and textbook author writing comprehensive study notes strictly tailored for **Nigerian Senior Secondary School students (SS1 – SS3)** preparing for the WASSCE (WAEC), NECO, and UTME (JAMB) exams.
 
-**Topic:** {concept_name}
-**Subtopics to cover (if provided):** {concept_description or ''}
+**Subject:** {sub_str}
+**Topic/Concept:** {concept_name}
+**Subtopics / Focus:** {concept_description or 'Comprehensive coverage of this concept according to syllabus'}
 
-### Target Audience & Syllabus Scope (CRITICAL)
-- **Target Audience:** Nigerian Senior Secondary School students (SS1–SS3).
-- **Syllabus Alignment:** Stay strictly within the boundary of the **NERDC Senior Secondary Biology Curriculum** and **WAEC/NECO/UTME (JAMB)** syllabi.
-- **Strict Depth Boundary:** DO NOT delve into 2nd-year or 3rd-year university/college level molecular biology, advanced biochemistry, or post-secondary cell signaling pathways (e.g. avoid complex enzyme synthesis mechanisms, university-level immunogenetics, or post-grad biochemical cascades).
-- **Curriculum Depth Example for Genetics:** Cover Mendelian inheritance (monohybrid and dihybrid crosses), alleles ($I^A, I^B, i$), ABO blood grouping, Rhesus factor (+/-), sex-linked traits (hemophilia, color blindness), dominant/recessive genes, co-dominance, Punnett squares, and basic DNA/RNA structure as expected in WAEC/UTME. Do NOT teach university-level glycosyltransferase enzymatic synthesis or advanced medical immunology.
-- **Tone:** Encouraging, clear, structured, and textbook-authoritative. Explain concepts from first principles using standard Nigerian Secondary School textbook vocabulary (e.g. Modern Biology / Idodo Umeh standard).
+### Syllabus Alignment & Scope
+- Align strictly with the Nigerian **NERDC Curriculum** and **WAEC/NECO/UTME (JAMB)** standards.
+- Explain concepts from first principles with clarity and authority.
+- Ground abstract formulas and concepts with real-world examples and step-by-step worked examples where applicable.
 
 ### Required Structure
-Produce the material in standard textbook format (using `##` Headings, `###` Subheadings, paragraphs, and lists) in this order:
+1. **## Overview**: 3–5 sentences introducing the concept, why it matters, and where it fits in the {sub_str} syllabus.
+2. **## Learning Objectives**: Bullet list of key learning outcomes (e.g. define, explain, calculate, differentiate).
+3. **## Core Content**: Thoroughly structured subsections (`### Subtopic`) covering all essential theories, laws, formulas (using LaTeX notation like $E = mc^2$ or $\\frac{{a}}{{b}}$ where appropriate), and step-by-step mechanisms.
+4. **## Key Terms Glossary**: Bulleted list defining technical terms introduced in this lesson (`- **Term**: Definition`).
+5. **## Worked Examples / Calculations** (if applicable): Fully worked step-by-step numerical or analytical problems with explanations.
+6. **## Summary Outline**: Quick review bullet points covering the core takeaways.
+7. **## Common Exam Angles**: Key exam traps, high-yield questions, and pitfalls in UTME/WAEC.
 
-1. **Overview** (3–5 sentences): What this topic is, why it matters biologically, and how it connects to topics that came before/after it in the WAEC/UTME curriculum.
-2. **Learning Objectives**: A bullet list of what the student should be able to do after studying this (define, describe, explain, compare, apply) — phrased like performance objectives.
-3. **Core Content**: Broken into clearly headed sub-sections (`### Subtopic`) matching the subtopics. For each sub-section:
-   - Full explanation of the concept, structure, or process — thorough, clear, and appropriate for Senior Secondary level.
-   - Precise definitions, set apart and bolded.
-   - Step-by-step mechanisms where relevant (e.g., physiological processes, cycles, pathways) written as numbered sequences.
-   - Structure-function relationships explained explicitly.
-   - Comparisons and differences tables **ONLY** where the subtopic explicitly contrasts 2 or more distinct things (e.g., Plant Cells vs. Animal Cells, Mitosis vs. Meiosis).
-   - Real-world or applied examples relevant to West Africa / Nigeria to anchor abstract ideas.
-   - Common misconceptions or confusion points explicitly called out and clarified.
-4. **Diagrams Description**: Where a diagram would normally appear (e.g., kidney structure, neuron, reflex arc, Punnett square), describe in words what it should show and label clearly.
-5. **Key Terms Glossary**: A bulleted list of every technical term introduced, each with a one-line definition (format: `- **Term**: Definition`). Do NOT use a table for this.
-6. **Worked Examples / Applied Scenarios** (if the topic involves calculations, genetics crosses, or problem-solving — e.g., Mendelian genetics Punnett squares, genetic crosses): fully worked, step-by-step.
-7. **Summary Outline**: A condensed bulleted outline of the whole topic's structure for quick review, using subheadings and bullet points. Do NOT use a table for this.
-8. **Common Exam Angles**: Bullet list of how this topic is typically tested in WAEC/NECO/UTME exams, highlighting high-yield exam traps.
-
-### Strict Formatting & Style Rules
-- **PRIMARY FORMAT:** Write all content using standard Headings (`##`, `###`), Subheadings, plain text paragraphs, and bulleted/numbered lists.
-- **TABLE RESTRICTION:** DO NOT format general content, summaries, glossaries, overview sections, or entire lessons inside markdown tables! Use markdown tables **ONLY AND EXCLUSIVELY** when comparing and contrasting 2 or more distinct items (e.g. *Feature A vs Feature B*). All other material MUST use standard prose, headings, and bullet points.
-- Depth and completeness matter, but stay strictly within WAEC/NECO/UTME secondary school scope.
-- Avoid bare lists of disconnected facts; always explain relationships between facts (cause → effect, structure → function, stimulus → response).
-- Use metric units and correct scientific nomenclature.
-
-### Output Constraints
-- Do not include quiz questions, answers, or assessment items — this material is purely for study, before the separate quiz-generation step.
-- Do not include meta-commentary about being an AI or about the prompt itself — output only the finished learning material, starting directly with the Overview section."""
+### Formatting
+- Use standard markdown headings (`##`, `###`), bold text, bullet points, and numbered lists.
+- Output ONLY the learning material starting directly with the `## Overview` section."""
 
         response = await self.client.create_response(
             input=prompt,
@@ -252,7 +223,11 @@ Produce the material in standard textbook format (using `##` Headings, `###` Sub
 
         content = self.client.extract_text_content(response)
         if not content:
-            raise OpenCodeZenError("Generated material response was empty from upstream provider.")
+            reasoning = self.client.extract_reasoning_content(response)
+            if reasoning:
+                content = str(reasoning)
+            else:
+                raise OpenCodeZenError("Generated material response was empty from upstream provider.")
         return content
 
     async def close(self):

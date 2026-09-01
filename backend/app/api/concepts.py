@@ -67,21 +67,31 @@ async def generate_material(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate learning material for a concept using AI service."""
-    result = await db.execute(select(Concept).where(Concept.id == concept_id))
+    result = await db.execute(
+        select(Concept)
+        .options(
+            selectinload(Concept.prerequisites),
+            selectinload(Concept.topic).selectinload(Topic.subject)
+        )
+        .where(Concept.id == concept_id)
+    )
     concept = result.scalar_one_or_none()
     if concept is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Concept not found")
 
+    subject_name = concept.topic.subject.name if concept.topic and concept.topic.subject else ""
+
     try:
         generated_content = await ai_service.generate_concept_material(
             concept_name=concept.name,
-            concept_description=concept.description
+            concept_description=concept.description,
+            subject_name=subject_name,
         )
         concept.content = generated_content
         db.add(concept)
         await db.commit()
         await db.refresh(concept)
-        
+
         return await get_concept(concept_id, current_user, db)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to generate material: {str(e)}")
