@@ -1,14 +1,12 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getToken } from '@/lib/auth';
 import { api } from '@/lib/api';
 import LoadingSpinner from './LoadingSpinner';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -16,8 +14,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     const verifyAuth = async () => {
       const token = getToken();
       if (!token) {
-        if (pathname !== '/login') {
-          router.push('/login');
+        if (location.pathname !== '/login') {
+          navigate('/login', { replace: true });
         }
         setIsLoading(false);
         return;
@@ -27,8 +25,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         await api.getMe();
         setIsAuthenticated(true);
       } catch {
-        if (pathname !== '/login') {
-          router.push('/login');
+        if (location.pathname !== '/login') {
+          navigate('/login', { replace: true });
         }
       } finally {
         setIsLoading(false);
@@ -36,7 +34,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     };
 
     verifyAuth();
-  }, [pathname, router]);
+  }, [location.pathname, navigate]);
 
   if (isLoading) {
     return (
@@ -46,7 +44,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!isAuthenticated && pathname !== '/login') {
+  if (!isAuthenticated && location.pathname !== '/login') {
     return null;
   }
 

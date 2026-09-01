@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -12,7 +13,10 @@ from app.schemas.chat import ChatRequest, ChatResponse, ChatMessagePair, Convers
 from app.services.auth_service import get_current_user
 from app.services.ai_service import ai_service
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/ai", tags=["ai"])
+
 
 
 @router.post("/chat", response_model=ChatMessagePair)
@@ -79,13 +83,20 @@ async def chat(
     await db.flush()
 
     # Get AI response
-    ai_response_text = await ai_service.chat(
-        message=request.message,
-        subject_name=subject_name,
-        concept_name=concept_name,
-        concept_content=concept_content,
-        conversation_history=conversation_history,
-    )
+    try:
+        ai_response_text = await ai_service.chat(
+            message=request.message,
+            subject_name=subject_name,
+            concept_name=concept_name,
+            concept_content=concept_content,
+            conversation_history=conversation_history,
+        )
+    except Exception as e:
+        logger.error(f"AI chat error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI Tutor service error: {str(e)}",
+        )
 
     # Save assistant message
     assistant_message = ChatMessage(
@@ -99,6 +110,7 @@ async def chat(
     )
     db.add(assistant_message)
     await db.flush()
+
 
     return ChatMessagePair(
         user_message=ChatResponse(

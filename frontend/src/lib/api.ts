@@ -1,8 +1,10 @@
 import { getToken, removeToken } from './auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// In Vite dev, '/api' is proxied to http://localhost:8000/api
+// In production, FastAPI serves the SPA directly from the same host/port
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
     super(message);
@@ -12,7 +14,7 @@ class ApiError extends Error {
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const token = getToken();
-  
+
   const headers = new Headers(options.headers);
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
@@ -21,7 +23,6 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
-  // 120s timeout — Render free tier can take 60s+ to cold-start
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 120000);
 
@@ -57,33 +58,35 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
 }
 
 export const api = {
-  login: (data: Record<string, string>) => 
+  login: (data: Record<string, string>) =>
     fetchWithAuth('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  
+
   getMe: () => fetchWithAuth('/auth/me'),
-  
+
   getSubjects: () => fetchWithAuth('/subjects'),
-  
+
   getSubject: (id: string | number) => fetchWithAuth(`/subjects/${id}`),
-  
+
   getTopic: (id: string | number) => fetchWithAuth(`/topics/${id}`),
-  
+
   getConcept: (id: string | number) => fetchWithAuth(`/concepts/${id}`),
-  generateMaterial: (id: string | number) => fetchWithAuth(`/concepts/${id}/generate-material`, { method: 'POST' }),
   
+  generateMaterial: (id: string | number) =>
+    fetchWithAuth(`/concepts/${id}/generate-material`, { method: 'POST' }),
+
   getProfiles: () => fetchWithAuth('/profile'),
-  
-  chat: (data: { message: string, subject_id?: number, concept_id?: number, conversation_id?: number }) =>
+
+  chat: (data: { message: string; subject_id?: number; concept_id?: number; conversation_id?: number }) =>
     fetchWithAuth('/ai/chat', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   chatStream: async (
-    data: { message: string, subject_id?: number, concept_id?: number, conversation_id?: number },
+    data: { message: string; subject_id?: number; concept_id?: number; conversation_id?: number },
     onChunk: (chunk: string) => void,
     onConversationId?: (convId: number) => void
   ) => {
@@ -133,17 +136,17 @@ export const api = {
       }
     }
   },
-    
+
   getChatHistory: (conversation_id?: number) => {
     const query = conversation_id ? `?conversation_id=${conversation_id}` : '';
     return fetchWithAuth(`/ai/chat/history${query}`);
   },
 
   getConversations: () => fetchWithAuth('/ai/conversations'),
-  
+
   deleteConversation: (conversation_id: number) =>
     fetchWithAuth(`/ai/conversations/${conversation_id}`, { method: 'DELETE' }),
-    
+
   updateMastery: (concept_id: string | number, passed: boolean) =>
     fetchWithAuth(`/profile/mastery/${concept_id}`, {
       method: 'POST',

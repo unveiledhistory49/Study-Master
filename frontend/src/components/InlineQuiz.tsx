@@ -35,7 +35,7 @@ export default function InlineQuiz({
   const [timeLeft, setTimeLeft] = useState(data.questions.length * 60); // 1 minute per question
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (started && !submitted && timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft(prev => {

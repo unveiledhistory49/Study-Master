@@ -1,35 +1,32 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { removeToken, getToken } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { User } from '@/lib/types';
 
 export default function Navbar() {
-  const pathname = usePathname();
-  const router = useRouter();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (getToken()) {
       api.getMe().then(setUser).catch(() => {});
     }
-  }, [pathname]);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     removeToken();
-    router.push('/login');
+    navigate('/login');
   };
 
-  if (pathname === '/login') return null;
+  if (location.pathname === '/login') return null;
 
   return (
     <nav className="sticky top-0 z-50 bg-[var(--bg-glass)] backdrop-blur-lg border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-lg bg-[image:var(--gradient-primary)] flex items-center justify-center text-white font-bold group-hover:shadow-[0_0_15px_var(--accent-blue-glow)] transition-all">
               S
             </div>
@@ -39,10 +36,20 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/" className={`text-sm font-medium transition-colors hover:text-[var(--accent-blue)] ${pathname === '/' ? 'text-[var(--accent-blue)]' : 'text-[var(--text-secondary)]'}`}>
+            <Link
+              to="/"
+              className={`text-sm font-medium transition-colors hover:text-[var(--accent-blue)] ${
+                location.pathname === '/' ? 'text-[var(--accent-blue)]' : 'text-[var(--text-secondary)]'
+              }`}
+            >
               Dashboard
             </Link>
-            <Link href="/chat" className={`text-sm font-medium transition-colors hover:text-[var(--accent-blue)] ${pathname === '/chat' ? 'text-[var(--accent-blue)]' : 'text-[var(--text-secondary)]'}`}>
+            <Link
+              to="/chat"
+              className={`text-sm font-medium transition-colors hover:text-[var(--accent-blue)] ${
+                location.pathname === '/chat' ? 'text-[var(--accent-blue)]' : 'text-[var(--text-secondary)]'
+              }`}
+            >
               AI Tutor
             </Link>
           </div>
@@ -53,15 +60,15 @@ export default function Navbar() {
                 <span className="text-sm font-medium text-[var(--text-secondary)] hidden sm:block">
                   {user.username}
                 </span>
-                <button 
+                <button
                   onClick={handleLogout}
-                  className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors"
+                  className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors cursor-pointer"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              <Link href="/login" className="btn-primary py-1.5 px-4 text-sm">
+              <Link to="/login" className="btn-primary py-1.5 px-4 text-sm">
                 Login
               </Link>
             )}

@@ -1,6 +1,11 @@
 import logging
-from openai import AsyncOpenAI
+from typing import AsyncIterator, Any
 from app.config import settings
+from app.services.opencode_zen import (
+    OpenCodeZenClient,
+    OpenCodeZenError,
+    ReasoningEffort,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +25,16 @@ Guidelines:
 - Keep responses focused and exam-relevant
 - **Interactive Quizzes:** If the student asks for a quiz, you MUST generate it using exactly the following JSON structure inside a markdown code block labeled `json quiz`:
 ```json quiz
-{{
+{
   "questions": [
-    {{
+    {
       "question": "The question text here",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "answerIndex": 0,
       "explanation": "Why this is correct."
-    }}
+    }
   ]
-}}
+}
 ```
 Only use this format. Do not provide any other text outside the JSON block when asked for a quiz. When the student submits the quiz, they will send a structured message back. Evaluate their answers, teach the failed concepts, and if they scored below 70%, automatically generate a new quiz JSON block at the end of your explanation.
 
@@ -37,17 +42,16 @@ You are patient, encouraging, and always aim to build the student's confidence w
 
 
 class AIService:
-    """Client for NVIDIA NIM API with GPT-OSS-120B using OpenAI client."""
+    """Service for AI interactions powered by OpenCode Zen (muse-spark-1.2-contributor-free)."""
 
     def __init__(self):
-        self.api_key = settings.NVIDIA_API_KEY
-        # If the URL still has /chat/completions from an old .env, strip it
-        self.api_url = settings.NVIDIA_API_URL.replace("/chat/completions", "")
-        self.model = settings.NVIDIA_MODEL
-        
-        self.client = AsyncOpenAI(
-            base_url=self.api_url,
+        self.api_key = settings.OPENCODE_ZEN_API_KEY
+        self.base_url = settings.OPENCODE_ZEN_BASE_URL
+        self.model = settings.OPENCODE_ZEN_MODEL
+        self.client = OpenCodeZenClient(
             api_key=self.api_key,
+            base_url=self.base_url,
+            default_model=self.model,
             timeout=120.0,
         )
 
@@ -57,8 +61,8 @@ class AIService:
         subject_name: str | None = None,
         concept_name: str | None = None,
         concept_content: str | None = None,
-        conversation_history: list[dict] | None = None,
-    ) -> list[dict]:
+        conversation_history: list[dict[str, str]] | None = None,
+    ) -> list[dict[str, str]]:
         """Helper to build system and user message payload."""
         if concept_content:
             system_content = f"""You are a one-on-one Biology tutor helping a student who is revising **{concept_name or 'a specific topic'}** to pass the UNIZIK Post-UTME exam (Medicine/Pharmacy/BMS/Agriculture track). The student has just been given the following study material to read:
@@ -107,7 +111,7 @@ Only use this format. Do not provide any other text outside the JSON block when 
             if concept_name:
                 system_content += f" Specifically, they are working on the concept: {concept_name}."
 
-        messages = [{"role": "system", "content": system_content}]
+        messages: list[dict[str, str]] = [{"role": "system", "content": system_content}]
         if conversation_history:
             messages.extend(conversation_history[-10:])
         messages.append({"role": "user", "content": message})
@@ -119,9 +123,13 @@ Only use this format. Do not provide any other text outside the JSON block when 
         subject_name: str | None = None,
         concept_name: str | None = None,
         concept_content: str | None = None,
-        conversation_history: list[dict] | None = None,
+        conversation_history: list[dict[str, str]] | None = None,
+        temperature: float = 0.7,
+        top_p: float | None = None,
+        max_output_tokens: int = 4096,
+        reasoning_effort: ReasoningEffort = "medium",
     ) -> str:
-        """Send a message to the AI and get a response."""
+        """Send a message to the AI tutor and return the response string."""
         messages = self._build_messages(
             message=message,
             subject_name=subject_name,
@@ -130,25 +138,20 @@ Only use this format. Do not provide any other text outside the JSON block when 
             conversation_history=conversation_history,
         )
 
-        try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=1,
-                top_p=1,
-                max_tokens=4096,
-                stream=False
-            )
+        response = await self.client.create_response(
+            input=messages,
+            temperature=temperature,
+            top_p=top_p,
+            max_output_tokens=max_output_tokens,
+            reasoning_effort=reasoning_effort,
+        )
 
-            content = response.choices[0].message.content or ""
-            reasoning = getattr(response.choices[0].message, "reasoning_content", None)
-            if not content and reasoning:
-                content = reasoning.strip()
-            return content
-
-        except Exception as e:
-            logger.error(f"AI service error: {e}")
-            return f"API Error: {str(e)}"
+        content = self.client.extract_text_content(response)
+        if not content:
+            reasoning = self.client.extract_reasoning_content(response)
+            if reasoning:
+                content = str(reasoning)
+        return content
 
     async def stream_chat(
         self,
@@ -156,10 +159,15 @@ Only use this format. Do not provide any other text outside the JSON block when 
         subject_name: str | None = None,
         concept_name: str | None = None,
         concept_content: str | None = None,
-        conversation_history: list[dict] | None = None,
-    ):
-        """Stream chat completions token-by-token for SSE."""
+        conversation_history: list[dict[str, str]] | None = None,
+        temperature: float = 0.7,
+        top_p: float | None = None,
+        max_output_tokens: int = 4096,
+        reasoning_effort: ReasoningEffort = "medium",
+    ) -> AsyncIterator[str]:
+        """Stream chat completions token-by-token formatted as Server-Sent Events (SSE)."""
         import json
+
         messages = self._build_messages(
             message=message,
             subject_name=subject_name,
@@ -169,29 +177,28 @@ Only use this format. Do not provide any other text outside the JSON block when 
         )
 
         try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=1,
-                top_p=1,
-                max_tokens=4096,
-                stream=True
-            )
-
-            async for chunk in response:
-                if chunk.choices and len(chunk.choices) > 0:
-                    delta = chunk.choices[0].delta.content or ""
-                    if delta:
-                        yield f"data: {json.dumps({'content': delta})}\n\n"
+            async for token in self.client.stream_response(
+                input=messages,
+                temperature=temperature,
+                top_p=top_p,
+                max_output_tokens=max_output_tokens,
+                reasoning_effort=reasoning_effort,
+            ):
+                if token:
+                    yield f"data: {json.dumps({'content': token})}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             logger.error(f"Stream AI service error: {e}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            raise e
 
     async def generate_concept_material(
         self,
         concept_name: str,
         concept_description: str | None = None,
+        temperature: float = 0.7,
+        max_output_tokens: int = 4096,
+        reasoning_effort: ReasoningEffort = "medium",
     ) -> str:
         """Generate comprehensive study material for a concept."""
         prompt = f"""You are an expert Nigerian biology educator and textbook author writing study material strictly tailored for **Nigerian Senior Secondary School students (SS1 – SS3)** preparing for the WASSCE (WAEC), NECO, and UTME (JAMB) exams. Your job is to produce a comprehensive, clear, and perfectly aligned study resource on the topic below.
@@ -236,28 +243,20 @@ Produce the material in standard textbook format (using `##` Headings, `###` Sub
 - Do not include quiz questions, answers, or assessment items — this material is purely for study, before the separate quiz-generation step.
 - Do not include meta-commentary about being an AI or about the prompt itself — output only the finished learning material, starting directly with the Overview section."""
 
-        try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                top_p=1,
-                max_tokens=4096,
-                stream=False
-            )
+        response = await self.client.create_response(
+            input=prompt,
+            temperature=temperature,
+            max_output_tokens=max_output_tokens,
+            reasoning_effort=reasoning_effort,
+        )
 
-            content = response.choices[0].message.content or ""
-            reasoning = getattr(response.choices[0].message, "reasoning_content", None)
-            if not content and reasoning:
-                content = reasoning.strip()
-
-            return content
-        except Exception as e:
-            logger.error(f"Material generation error: {e}")
-            raise e
+        content = self.client.extract_text_content(response)
+        if not content:
+            raise OpenCodeZenError("Generated material response was empty from upstream provider.")
+        return content
 
     async def close(self):
-        """Close the HTTP client."""
+        """Close the underlying client."""
         await self.client.close()
 
 

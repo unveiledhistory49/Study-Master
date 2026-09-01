@@ -49,7 +49,9 @@
   }
 
   body {
-    @apply bg-bg-primary text-text-primary antialiased min-h-screen selection:bg-accent-blue selection:text-white;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
   }
 
   @keyframes fadeIn {
@@ -58,29 +60,82 @@
   }
 }
 
-@layer components {
-  .glass-card {
-    @apply bg-[var(--bg-glass)] backdrop-blur-md border border-[var(--border)] rounded-2xl shadow-lg transition-all duration-300;
-  }
-  .glass-card:hover {
-    @apply border-[var(--border-hover)] bg-[var(--bg-card-hover)] shadow-[0_0_20px_var(--accent-blue-glow)];
-  }
-  .glass-panel {
-    @apply bg-[var(--bg-glass)] backdrop-blur-md border border-[var(--border)] rounded-2xl;
-  }
-  .btn-primary {
-    @apply text-white px-6 py-2.5 rounded-lg font-medium tracking-wide transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none;
-    background: var(--gradient-primary);
-  }
-  .btn-primary:hover {
-    box-shadow: 0 0 15px var(--accent-blue-glow);
-  }
-  .btn-secondary {
-    @apply bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] px-6 py-2.5 rounded-lg font-medium tracking-wide transition-all duration-300 hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-hover)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
-  }
-  .input-field {
-    @apply w-full bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] focus:border-transparent transition-all duration-200 placeholder-[var(--text-muted)];
-  }
+.glass-card {
+  background-color: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg-card-hover);
+  box-shadow: 0 0 20px var(--accent-blue-glow);
+}
+.glass-panel {
+  background-color: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+.btn-primary {
+  color: white;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease;
+  background: var(--gradient-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 15px var(--accent-blue-glow);
+  transform: scale(1.02);
+}
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: scale(1.02);
+}
+.input-field {
+  width: 100%;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: all 0.2s;
+}
+.input-field:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px var(--accent-blue-glow);
 }
 
 /* Custom Scrollbar */
@@ -146,8 +201,7 @@
   padding: 0.15em 0.4em;
   border-radius: 4px;
   font-size: 0.9em;
-  font-family: 'Fira Code', monospace;
-  overflow-wrap: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .chat-markdown pre {
   background: var(--bg-primary);
@@ -157,14 +211,6 @@
   margin: 0.75em 0;
   max-width: 100%;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.chat-markdown pre::-webkit-scrollbar {
-  height: 6px;
-}
-.chat-markdown pre::-webkit-scrollbar-thumb {
-  background: var(--border-hover);
-  border-radius: 3px;
 }
 .chat-markdown blockquote {
   border-left: 3px solid var(--accent-blue);
@@ -178,18 +224,9 @@
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  white-space: nowrap;
   border-collapse: collapse;
   margin: 0.75em 0;
   font-size: 0.9em;
-  -webkit-overflow-scrolling: touch;
-}
-.chat-markdown table::-webkit-scrollbar {
-  height: 6px;
-}
-.chat-markdown table::-webkit-scrollbar-thumb {
-  background: var(--border-hover);
-  border-radius: 3px;
 }
 .chat-markdown .katex-display {
   overflow-x: auto;

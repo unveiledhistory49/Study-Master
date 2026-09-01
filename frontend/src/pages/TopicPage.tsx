@@ -1,23 +1,22 @@
-'use client';
-
-import { useEffect, useState, use } from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ConceptCard from '@/components/ConceptCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { api } from '@/lib/api';
 import { Topic, Subject } from '@/lib/types';
 
-export default function TopicPage({ params }: { params: Promise<{ id: string }> }) {
-  const unwrappedParams = use(params);
+export default function TopicPage() {
+  const { id } = useParams<{ id: string }>();
   const [topic, setTopic] = useState<Topic | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!id) return;
     const fetchTopic = async () => {
       try {
-        const topicData = await api.getTopic(unwrappedParams.id);
+        const topicData = await api.getTopic(id);
         setTopic(topicData);
         if (topicData.subject_id) {
           const subjectData = await api.getSubject(topicData.subject_id);
@@ -31,10 +30,23 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
     };
 
     fetchTopic();
-  }, [unwrappedParams.id]);
+  }, [id]);
 
-  if (isLoading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
-  if (!topic) return <ProtectedRoute><div className="text-center p-10">Topic not found</div></ProtectedRoute>;
+  if (isLoading) {
+    return (
+      <ProtectedRoute>
+        <LoadingSpinner />
+      </ProtectedRoute>
+    );
+  }
+
+  if (!topic) {
+    return (
+      <ProtectedRoute>
+        <div className="text-center p-10">Topic not found</div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
@@ -42,7 +54,10 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
         <div className="mb-6 flex items-center text-sm">
           {subject && (
             <>
-              <Link href={`/subjects/${subject.id}`} className="text-[var(--text-muted)] hover:text-[var(--accent-blue)] transition-colors">
+              <Link
+                to={`/subjects/${subject.id}`}
+                className="text-[var(--text-muted)] hover:text-[var(--accent-blue)] transition-colors"
+              >
                 {subject.name}
               </Link>
               <span className="mx-2 text-[var(--border-hover)]">/</span>
@@ -59,10 +74,10 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
             <p className="text-[var(--text-secondary)] text-lg mb-6 max-w-3xl">
               {topic.description}
             </p>
-            
+
             <div className="w-full max-w-md h-3 bg-[var(--bg-secondary)] rounded-full overflow-hidden border border-[var(--border)]">
-              <div 
-                className="h-full bg-[image:var(--gradient-primary)] rounded-full transition-all duration-1000 ease-out" 
+              <div
+                className="h-full bg-[image:var(--gradient-primary)] rounded-full transition-all duration-1000 ease-out"
                 style={{ width: `${topic.mastery_percentage || 0}%` }}
               />
             </div>
@@ -78,16 +93,16 @@ export default function TopicPage({ params }: { params: Promise<{ id: string }> 
             {topic.concepts?.length || 0} Total
           </span>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {topic.concepts?.map((concept) => (
             <ConceptCard key={concept.id} concept={concept} />
           ))}
-          
+
           {(!topic.concepts || topic.concepts.length === 0) && (
-             <div className="col-span-full text-center p-10 text-[var(--text-muted)] glass-panel">
-               No concepts available yet.
-             </div>
+            <div className="col-span-full text-center p-10 text-[var(--text-muted)] glass-panel">
+              No concepts available yet.
+            </div>
           )}
         </div>
       </div>
