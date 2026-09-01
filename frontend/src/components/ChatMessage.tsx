@@ -42,11 +42,14 @@ function ChatMessageComponent({
     () => ({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
       code({ node, inline, className, children, ...props }: any) {
-        const isQuiz = className?.includes('language-json') && String(children).includes('"questions"');
+        const rawCode = String(children).trim();
+        const isQuiz =
+          (className?.includes('language-json') || className?.includes('language-quiz')) &&
+          (rawCode.includes('"questions"') || rawCode.includes('"scenario"') || rawCode.includes('"options"'));
 
-        if (!inline && isQuiz) {
+        if (!inline && (isQuiz || rawCode.startsWith('{"questions"') || rawCode.startsWith('{\n  "questions"'))) {
           try {
-            const quizData = JSON.parse(String(children));
+            const quizData = JSON.parse(rawCode);
             if (quizData.questions && Array.isArray(quizData.questions)) {
               return (
                 <InlineQuiz
@@ -69,12 +72,12 @@ function ChatMessageComponent({
                           const msg = `I scored ${result.score}/${result.total} (${percentage}%).\n\nPassed! ${failedDetails ? `Missed:\n${failedDetails}` : `100% correct!`} 3-quiz streak achieved. What should I study next?`;
                           onSendContextMessage(msg);
                         } else {
-                          const msg = `I scored ${result.score}/${result.total} (${percentage}%).\n\nPassed! Streak is now ${newStreak}/3. Please give me the next quiz.`;
+                          const msg = `I scored ${result.score}/${result.total} (${percentage}%).\n\nPassed! Streak is now ${newStreak}/3. Please generate a BRAND NEW, completely different 5-question UTME practice quiz testing different angles and tricky scenarios of this topic. Do NOT repeat any questions from previous quizzes in this chat.`;
                           onSendContextMessage(msg);
                         }
                       } else {
                         if (onUpdateStreak) onUpdateStreak(0);
-                        const msg = `I scored ${result.score}/${result.total} (${percentage}%).\n\nFailed questions:\n${failedDetails}\n\nPlease explain why these answers are correct and give me another quiz.`;
+                        const msg = `I scored ${result.score}/${result.total} (${percentage}%).\n\nFailed questions:\n${failedDetails}\n\nPlease briefly explain why the correct answers are right and diagnose my misconceptions, then generate a FRESH 5-question quiz with completely different questions testing these concepts. Do NOT repeat the previous questions.`;
                         onSendContextMessage(msg);
                       }
                     }
