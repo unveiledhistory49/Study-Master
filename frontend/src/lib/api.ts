@@ -135,7 +135,8 @@ export const api = {
   chatStream: async (
     data: { message: string; subject_id?: number; concept_id?: number; conversation_id?: number },
     onChunk: (chunk: string) => void,
-    onConversationId?: (convId: number) => void
+    onConversationId?: (convId: number) => void,
+    signal?: AbortSignal
   ) => {
     const token = getToken();
     const headers = new Headers({ 'Content-Type': 'application/json' });
@@ -145,6 +146,7 @@ export const api = {
       method: 'POST',
       headers,
       body: JSON.stringify(data),
+      signal,
     });
 
     if (!response.ok) {
@@ -154,7 +156,10 @@ export const api = {
 
     const convIdHeader = response.headers.get('X-Conversation-Id');
     if (convIdHeader && onConversationId) {
-      onConversationId(parseInt(convIdHeader, 10));
+      const parsedId = parseInt(convIdHeader, 10);
+      if (!isNaN(parsedId)) {
+        onConversationId(parsedId);
+      }
     }
 
     const reader = response.body?.getReader();

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ChatMessage from '@/components/ChatMessage';
@@ -9,145 +9,172 @@ const STARTER_PROMPTS = [
   { label: '🧬 Cell Structure & Division', prompt: 'Explain the difference between mitosis and meiosis for UTME Biology.' },
   { label: '🧪 Chemical Bonding', prompt: 'Explain electrovalent vs covalent bonding with examples for UTME Chemistry.' },
   { label: '⚛️ Projectile Motion', prompt: 'Explain the key formulas and concepts for projectile motion in UTME Physics.' },
-  { label: '📝 Quick Practice Quiz', prompt: 'Give me a 5-question UTME practice quiz across Biology, Chemistry, and Physics.' },
+  { label: '📝 Practice Quiz Challenge', prompt: 'Give me a 5-question high-yield UTME practice quiz with challenging scenario-based questions across Biology, Chemistry, and Physics.' },
 ];
 
+const DEFAULT_WELCOME_MESSAGE: ChatMessageType = {
+  id: 'welcome-0',
+  role: 'assistant',
+  content: 'Hello. I am your StudyMaster AI Tutor for UTME (Biology, Chemistry, and Physics). What topic would you like to cover today?',
+};
+
 export default function ChatPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialConceptId = searchParams.get('concept_id');
+  const startQuizParam = searchParams.get('start_quiz');
+  const urlConversationId = searchParams.get('conversation_id');
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(
+    urlConversationId ? parseInt(urlConversationId, 10) : null
+  );
+  const [conceptId] = useState<number | null>(initialConceptId ? parseInt(initialConceptId, 10) : null);
   const [quizPassStreak, setQuizPassStreak] = useState(0);
 
-  const [messages, setMessages] = useState<ChatMessageType[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Hello. I am your StudyMaster AI Tutor for UTME (Biology, Chemistry, and Physics). What topic would you like to cover today?',
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([DEFAULT_WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isStreamingRef = useRef(false);
+  const activeConversationIdRef = useRef<number | null>(selectedConversationId);
+  const hasTriggeredQuizRef = useRef(false);
 
-  const scrollToBottom = () => {
+  // Synchronize ref with state
+  useEffect(() => {
+    activeConversationIdRef.current = selectedConversationId;
+  }, [selectedConversationId]);
+
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
-  // When selected conversation changes, fetch its history
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const history = await api.getChatHistory(selectedConversationId || undefined);
-        if (history && history.length > 0) {
-          setMessages(history);
-        } else {
-          setMessages([
-            {
-              id: '1',
-              role: 'assistant',
-              content: 'Hello. I am your StudyMaster AI Tutor for UTME. What topic would you like to cover today?',
-            },
-          ]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch chat history:', error);
-      }
-    };
-    fetchHistory();
-  }, [selectedConversationId]);
-
-  const fetchConversations = async () => {
+  // Fetch conversations list without force-jumping to the first one
+  const fetchConversations = useCallback(async () => {
     try {
-      const convos = await api.getConversations();
-      setConversations(convos);
-      if (convos.length > 0 && selectedConversationId === null) {
-        setSelectedConversationId(convos[0].id);
-      }
+      const convos = await api.getConversations(true);
+      setConversations(convos || []);
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchConversations();
+  }, [fetchConversations]);
+
+  // Load chat history ONLY when explicitly selecting an existing conversation
+  const loadConversationHistory = useCallback(async (convId: number) => {
+    try {
+      const history = await api.getChatHistory(convId);
+      // Ensure we only set messages if the user is still on this conversation
+      if (activeConversationIdRef.current === convId) {
+        if (history && history.length > 0) {
+          setMessages(history);
+        } else {
+          setMessages([DEFAULT_WELCOME_MESSAGE]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
   }, []);
 
-  const handleNewChat = () => {
-    setSelectedConversationId(null);
-    setMessages([
-      {
-        id: '1',
-        role: 'assistant',
-        content: 'Hello. I am your StudyMaster AI Tutor for UTME. What topic would you like to cover today?',
-      },
-    ]);
+  // When selectedConversationId changes explicitly (user clicks sidebar or URL changes)
+  const handleSelectConversation = (id: number) => {
+    if (activeConversationIdRef.current === id && !isStreamingRef.current) return;
+
+    // Abort any ongoing stream
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    isStreamingRef.current = false;
+    setIsLoading(false);
+
+    setSelectedConversationId(id);
+    activeConversationIdRef.current = id;
+    setSearchParams({ conversation_id: id.toString() }, { replace: true });
+    loadConversationHistory(id);
+
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
+  // Start a fresh, clean chat
+  const handleNewChat = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    isStreamingRef.current = false;
+    setIsLoading(false);
+
+    setSelectedConversationId(null);
+    activeConversationIdRef.current = null;
+    setMessages([DEFAULT_WELCOME_MESSAGE]);
+    setSearchParams({}, { replace: true });
+
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  };
+
+  // Delete a conversation
   const handleDeleteConversation = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     try {
       await api.deleteConversation(id);
       if (selectedConversationId === id) {
-        setSelectedConversationId(null);
+        handleNewChat();
       }
       fetchConversations();
     } catch (error) {
-      console.error('Failed to delete conversation', error);
+      console.error('Failed to delete conversation:', error);
     }
   };
-
-  const selectConversation = (id: number) => {
-    setSelectedConversationId(id);
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
-  };
-
-  const [searchParams] = useSearchParams();
-  const initialConceptId = searchParams.get('concept_id');
-  const startQuizParam = searchParams.get('start_quiz');
-  const [conceptId] = useState<number | null>(initialConceptId ? parseInt(initialConceptId, 10) : null);
-  const hasTriggeredQuizRef = useRef(false);
-
-  // Auto-trigger quiz if start_quiz=true is present
-  useEffect(() => {
-    if (startQuizParam === 'true' && conceptId && !hasTriggeredQuizRef.current) {
-      hasTriggeredQuizRef.current = true;
-      setTimeout(() => {
-        sendMessage("I'm done studying. Give me a quiz to test my knowledge!");
-      }, 200);
-    }
-  }, [startQuizParam, conceptId]);
 
   const sendMessage = async (messageText: string) => {
-    if (isLoading) return;
+    if (isLoading || !messageText.trim()) return;
 
+    // Create user message
     const userMessage: ChatMessageType = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}`,
       role: 'user',
-      content: messageText,
+      content: messageText.trim(),
     };
 
-    const assistantMsgId = (Date.now() + 1).toString();
+    const assistantMsgId = `assistant-${Date.now() + 1}`;
     const placeholderAssistantMessage: ChatMessageType = {
       id: assistantMsgId,
       role: 'assistant',
       content: '',
     };
 
-    setMessages((prev) => [...prev, userMessage, placeholderAssistantMessage]);
+    // If starting from clean welcome, replace it with the conversation
+    setMessages((prev) => {
+      const filtered = prev.filter((m) => m.id !== 'welcome-0');
+      return [...filtered, userMessage, placeholderAssistantMessage];
+    });
+
     setIsLoading(true);
+    isStreamingRef.current = true;
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const currentConvId = selectedConversationId;
 
     try {
       let accumulatedContent = '';
       await api.chatStream(
         {
           message: userMessage.content,
-          conversation_id: selectedConversationId || undefined,
+          conversation_id: currentConvId || undefined,
           concept_id: conceptId || undefined,
         },
         (chunk) => {
@@ -159,28 +186,56 @@ export default function ChatPage() {
           );
         },
         (newConvId) => {
-          if (!selectedConversationId) {
+          // If this was a new conversation, update conversation ID without wiping the active message stream
+          if (!currentConvId && newConvId) {
             setSelectedConversationId(newConvId);
+            activeConversationIdRef.current = newConvId;
+            setSearchParams({ conversation_id: newConvId.toString() }, { replace: true });
             fetchConversations();
           }
-        }
+        },
+        controller.signal
       );
     } catch (error) {
-      console.error('Chat error:', error);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMsgId
-            ? {
-                ...msg,
-                content: msg.content || 'Error connecting to AI service. Please try again.',
-              }
-            : msg
-        )
-      );
+      if ((error as Error)?.name !== 'AbortError') {
+        console.error('Chat error:', error);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId
+              ? {
+                  ...msg,
+                  content: msg.content || 'Error connecting to AI service. Please try again.',
+                }
+              : msg
+          )
+        );
+      }
     } finally {
       setIsLoading(false);
+      isStreamingRef.current = false;
+      abortControllerRef.current = null;
     }
   };
+
+  // Auto-trigger concept quiz if start_quiz=true is present
+  useEffect(() => {
+    if (startQuizParam === 'true' && conceptId && !hasTriggeredQuizRef.current) {
+      hasTriggeredQuizRef.current = true;
+      setTimeout(() => {
+        sendMessage("I'm done studying. Give me a 5-question challenging UTME practice quiz with analytical and scenario-based questions to test my deep understanding of this topic!");
+      }, 300);
+    }
+  }, [startQuizParam, conceptId]);
+
+  // Initial load if conversation_id was in URL
+  useEffect(() => {
+    if (urlConversationId) {
+      const parsed = parseInt(urlConversationId, 10);
+      if (!isNaN(parsed)) {
+        loadConversationHistory(parsed);
+      }
+    }
+  }, [urlConversationId, loadConversationHistory]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -229,7 +284,7 @@ export default function ChatPage() {
               className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#242424] border border-[#2f2f2f] rounded-md transition-colors cursor-pointer"
             >
               <span>+ New chat</span>
-              <span className="text-xs text-[#8e8e8e]">⌘K</span>
+              <span className="text-xs text-[#8e8e8e]">New</span>
             </button>
           </div>
 
@@ -241,20 +296,20 @@ export default function ChatPage() {
             {conversations.map((conv) => (
               <div
                 key={conv.id}
-                onClick={() => selectConversation(conv.id)}
+                onClick={() => handleSelectConversation(conv.id)}
                 className={`
-                  group flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer text-xs
+                  group flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer text-xs transition-colors
                   ${
                     selectedConversationId === conv.id
-                      ? 'bg-[#212121] text-white font-medium'
-                      : 'text-[#a1a1aa] hover:bg-[#1a1a1a] hover:text-white'
+                      ? 'bg-[#212121] text-white font-medium border border-[#333333]'
+                      : 'text-[#a1a1aa] hover:bg-[#1a1a1a] hover:text-white border border-transparent'
                   }
                 `}
               >
                 <span className="truncate pr-2">{conv.title || 'Untitled chat'}</span>
                 <button
                   onClick={(e) => handleDeleteConversation(e, conv.id)}
-                  className="opacity-0 group-hover:opacity-100 text-[#8e8e8e] hover:text-white transition-opacity p-0.5"
+                  className="opacity-0 group-hover:opacity-100 text-[#8e8e8e] hover:text-white transition-opacity p-0.5 cursor-pointer"
                   title="Delete chat"
                 >
                   ✕
@@ -273,18 +328,18 @@ export default function ChatPage() {
           <div className="md:hidden flex items-center justify-between p-3 border-b border-[#242424] bg-[#121212]">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="text-[#8e8e8e] hover:text-white text-sm px-2 py-1 border border-[#2f2f2f] rounded"
+              className="text-[#8e8e8e] hover:text-white text-sm px-2 py-1 border border-[#2f2f2f] rounded cursor-pointer"
             >
               ☰ Chats
             </button>
             <span className="text-xs font-medium truncate max-w-[160px]">
               {selectedConversationId
-                ? conversations.find((c) => c.id === selectedConversationId)?.title
+                ? conversations.find((c) => c.id === selectedConversationId)?.title || 'Chat'
                 : 'New chat'}
             </span>
             <button
               onClick={handleNewChat}
-              className="text-xs text-white bg-[#242424] px-2 py-1 rounded"
+              className="text-xs text-white bg-[#242424] px-2 py-1 rounded cursor-pointer"
             >
               + New
             </button>
