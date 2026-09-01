@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
-import { setToken } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState('');
@@ -16,7 +17,7 @@ export default function LoginPage() {
 
     try {
       const response = await api.login({ username, password: '123' });
-      setToken(response.access_token);
+      await login(response.access_token);
       navigate('/');
     } catch (err) {
       const errorObj = err as Error | { message?: string };

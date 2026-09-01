@@ -1,22 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { removeToken, getToken } from '@/lib/auth';
-import { api } from '@/lib/api';
-import { User } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    if (getToken()) {
-      api.getMe().then(setUser).catch(() => {});
-    }
-  }, [location.pathname]);
+  const { user, isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
-    removeToken();
+    logout();
     navigate('/login');
   };
 
@@ -60,10 +51,10 @@ export default function Navbar() {
 
         {/* User / Actions */}
         <div className="flex items-center gap-3">
-          {user ? (
+          {isAuthenticated ? (
             <div className="flex items-center gap-3">
               <span className="text-xs text-[#8e8e8e] border border-[#2f2f2f] bg-[#121212] px-2.5 py-1 rounded">
-                {user.username}
+                {user?.username || 'Student'}
               </span>
               <button
                 onClick={handleLogout}

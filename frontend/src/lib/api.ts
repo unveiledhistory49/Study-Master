@@ -1,7 +1,6 @@
 import { getToken, removeToken } from './auth';
+import { User, Subject, Topic, Concept, Profile, ChatMessage, Conversation } from './types';
 
-// In Vite dev, '/api' is proxied to http://localhost:8000/api
-// In production, FastAPI serves the SPA directly from the same host/port
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
 export class ApiError extends Error {
@@ -12,7 +11,16 @@ export class ApiError extends Error {
   }
 }
 
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+// In-memory SWR cache for instant navigation
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const memoryCache = new Map<string, CacheEntry<unknown>>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+
+async function fetchWithAuth<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
 
   const headers = new Headers(options.headers);
@@ -24,7 +32,7 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 120000);
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
 
   let response: Response;
   try {
@@ -36,7 +44,7 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   } catch (err) {
     clearTimeout(timeoutId);
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new ApiError('Request timed out. The server may be waking up — please try again in a moment.', 408);
+      throw new ApiError('Request timed out. Please try again.', 408);
     }
     throw err;
   }
@@ -44,6 +52,7 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
 
   if (response.status === 401) {
     removeToken();
+    memoryCache.clear();
     if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
       window.location.href = '/login';
     }
@@ -57,27 +66,65 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   return response.json();
 }
 
+/**
+ * Fetch with in-memory caching for instant 0ms responses on subsequent visits
+ */
+async function fetchCached<T>(endpoint: string, forceFresh = false): Promise<T> {
+  const cacheKey = endpoint;
+  const now = Date.now();
+
+  if (!forceFresh && memoryCache.has(cacheKey)) {
+    const entry = memoryCache.get(cacheKey) as CacheEntry<T>;
+    if (now - entry.timestamp < CACHE_TTL_MS) {
+      return entry.data;
+    }
+  }
+
+  const data = await fetchWithAuth<T>(endpoint);
+  memoryCache.set(cacheKey, { data, timestamp: now });
+  return data;
+}
+
 export const api = {
-  login: (data: Record<string, string>) =>
-    fetchWithAuth('/auth/login', {
+  clearCache: (prefix?: string) => {
+    if (!prefix) {
+      memoryCache.clear();
+    } else {
+      for (const key of memoryCache.keys()) {
+        if (key.startsWith(prefix)) {
+          memoryCache.delete(key);
+        }
+      }
+    }
+  },
+
+  login: async (data: Record<string, string>): Promise<{ access_token: string; token_type: string }> => {
+    memoryCache.clear();
+    return fetchWithAuth<{ access_token: string; token_type: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    });
+  },
 
-  getMe: () => fetchWithAuth('/auth/me'),
+  getMe: (forceFresh = false): Promise<User> => fetchCached<User>('/auth/me', forceFresh),
 
-  getSubjects: () => fetchWithAuth('/subjects'),
+  getSubjects: (forceFresh = false): Promise<Subject[]> => fetchCached<Subject[]>('/subjects', forceFresh),
 
-  getSubject: (id: string | number) => fetchWithAuth(`/subjects/${id}`),
+  getSubject: (id: string | number, forceFresh = false): Promise<Subject> =>
+    fetchCached<Subject>(`/subjects/${id}`, forceFresh),
 
-  getTopic: (id: string | number) => fetchWithAuth(`/topics/${id}`),
+  getTopic: (id: string | number, forceFresh = false): Promise<Topic> =>
+    fetchCached<Topic>(`/topics/${id}`, forceFresh),
 
-  getConcept: (id: string | number) => fetchWithAuth(`/concepts/${id}`),
-  
-  generateMaterial: (id: string | number) =>
-    fetchWithAuth(`/concepts/${id}/generate-material`, { method: 'POST' }),
+  getConcept: (id: string | number, forceFresh = false): Promise<Concept> =>
+    fetchCached<Concept>(`/concepts/${id}`, forceFresh),
 
-  getProfiles: () => fetchWithAuth('/profile'),
+  generateMaterial: async (id: string | number): Promise<Concept> => {
+    memoryCache.delete(`/concepts/${id}`);
+    return fetchWithAuth<Concept>(`/concepts/${id}/generate-material`, { method: 'POST' });
+  },
+
+  getProfiles: (forceFresh = false): Promise<Profile[]> => fetchCached<Profile[]>('/profile', forceFresh),
 
   chat: (data: { message: string; subject_id?: number; concept_id?: number; conversation_id?: number }) =>
     fetchWithAuth('/ai/chat', {
@@ -137,19 +184,25 @@ export const api = {
     }
   },
 
-  getChatHistory: (conversation_id?: number) => {
+  getChatHistory: (conversation_id?: number): Promise<ChatMessage[]> => {
     const query = conversation_id ? `?conversation_id=${conversation_id}` : '';
-    return fetchWithAuth(`/ai/chat/history${query}`);
+    return fetchWithAuth<ChatMessage[]>(`/ai/chat/history${query}`);
   },
 
-  getConversations: () => fetchWithAuth('/ai/conversations'),
+  getConversations: (forceFresh = false): Promise<Conversation[]> =>
+    fetchCached<Conversation[]>('/ai/conversations', forceFresh),
 
-  deleteConversation: (conversation_id: number) =>
-    fetchWithAuth(`/ai/conversations/${conversation_id}`, { method: 'DELETE' }),
+  deleteConversation: async (conversation_id: number) => {
+    memoryCache.delete('/ai/conversations');
+    return fetchWithAuth(`/ai/conversations/${conversation_id}`, { method: 'DELETE' });
+  },
 
-  updateMastery: (concept_id: string | number, passed: boolean) =>
-    fetchWithAuth(`/profile/mastery/${concept_id}`, {
+  updateMastery: async (concept_id: string | number, passed: boolean) => {
+    memoryCache.delete('/profile');
+    memoryCache.delete(`/concepts/${concept_id}`);
+    return fetchWithAuth(`/profile/mastery/${concept_id}`, {
       method: 'POST',
       body: JSON.stringify({ passed }),
-    }),
+    });
+  },
 };

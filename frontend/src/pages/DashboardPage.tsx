@@ -5,42 +5,39 @@ import SubjectCard from '@/components/SubjectCard';
 import StatCard from '@/components/StatCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { api } from '@/lib/api';
-import { User, Subject, Profile } from '@/lib/types';
+import { Subject, Profile } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(subjects.length === 0);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchData = async () => {
       try {
-        const [userData, subjectsData, profilesData] = await Promise.all([
-          api.getMe(),
+        const [subjectsData, profilesData] = await Promise.all([
           api.getSubjects(),
           api.getProfiles(),
         ]);
-        setUser(userData);
-        setSubjects(subjectsData);
-        setProfiles(profilesData);
+        if (isMounted) {
+          setSubjects(subjectsData || []);
+          setProfiles(profilesData || []);
+        }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
-
-  if (isLoading) {
-    return (
-      <ProtectedRoute>
-        <LoadingSpinner />
-      </ProtectedRoute>
-    );
-  }
 
   const totalTimeSpent = profiles.reduce(
     (acc, profile) => acc + (profile.total_study_time_minutes ?? profile.time_spent ?? 0),
@@ -60,7 +57,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-8 border-b border-[#242424] gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">
-              Hello, {user?.username}
+              Hello, {user?.username || 'Student'}
             </h1>
             <p className="text-xs text-[#8e8e8e] mt-1">
               UTME Science Preparation (Biology, Chemistry, Physics)
@@ -74,31 +71,37 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-          <StatCard title="Overall Mastery" value={`${averageMastery}%`} icon="🎯" />
-          <StatCard
-            title="Study Time"
-            value={`${Math.floor(totalTimeSpent / 60)}h ${totalTimeSpent % 60}m`}
-            icon="⏱️"
-          />
-          <StatCard title="Streak" value={`${maxStreak}d`} icon="🔥" />
-          <StatCard title="Mastered" value={`${totalMastered}`} icon="🧠" />
-        </div>
+        {isLoading && subjects.length === 0 ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+              <StatCard title="Overall Mastery" value={`${averageMastery}%`} icon="🎯" />
+              <StatCard
+                title="Study Time"
+                value={`${Math.floor(totalTimeSpent / 60)}h ${totalTimeSpent % 60}m`}
+                icon="⏱️"
+              />
+              <StatCard title="Streak" value={`${maxStreak}d`} icon="🔥" />
+              <StatCard title="Mastered" value={`${totalMastered}`} icon="🧠" />
+            </div>
 
-        {/* Subjects Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-white">Syllabus Subjects</h2>
-            <span className="text-xs text-[#8e8e8e]">{subjects.length} Subjects Active</span>
-          </div>
+            {/* Subjects Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-white">Syllabus Subjects</h2>
+                <span className="text-xs text-[#8e8e8e]">{subjects.length} Subjects Active</span>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {subjects.map((subject) => (
-              <SubjectCard key={subject.id} subject={subject} />
-            ))}
-          </div>
-        </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {subjects.map((subject) => (
+                  <SubjectCard key={subject.id} subject={subject} />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </ProtectedRoute>
   );
