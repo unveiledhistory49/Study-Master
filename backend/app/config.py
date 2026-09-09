@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     
     # OpenCode Zen AI Configuration
-    OPENCODE_ZEN_API_KEY: str = "sk-KcQ2BDEH61NbVx7B6rweHpwFsPD2JnJlrdHP8BrRJPmDi1VaPzT8VadZsBWUev6O"
+    OPENCODE_ZEN_API_KEY: str = ""
     OPENCODE_ZEN_BASE_URL: str = "https://opencode.ai/zen/v1"
     OPENCODE_ZEN_MODEL: str = "muse-spark-1.2-contributor-free"
     OPENCODE_ZEN_DEFAULT_TEMPERATURE: float = 0.7

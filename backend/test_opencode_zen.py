@@ -22,10 +22,7 @@ from app.services.opencode_zen import (
 )
 
 # Test API key
-TEST_API_KEY = os.getenv(
-    "OPENCODE_ZEN_API_KEY",
-    "sk-KcQ2BDEH61NbVx7B6rweHpwFsPD2JnJlrdHP8BrRJPmDi1VaPzT8VadZsBWUev6O",
-)
+TEST_API_KEY = os.getenv("OPENCODE_ZEN_API_KEY", "")
 
 
 async def test_non_streaming_string_prompt(client: OpenCodeZenClient):

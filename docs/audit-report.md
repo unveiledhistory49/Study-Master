@@ -66,7 +66,7 @@ npm run build → sh: 1: next: not found
 ```ini
 SECRET_KEY=studymaster-jwt-secret-key-2026-very-secure
 DATABASE_URL=postgresql+asyncpg://postgres.your-project-ref:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres  # placeholder
-NVIDIA_API_KEY=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
+NVIDIA_API_KEY=nvapi-your-key-here  # redacted
 NVIDIA_API_URL=https://integrate.api.nvidia.com/v1/chat/completions  # with suffix
 NVIDIA_MODEL=deepseek-ai/deepseek-r1  # vs config default openai/gpt-oss-120b vs test_standalone deepseek-v4-flash
 ```
@@ -172,7 +172,7 @@ Per AGENTS §6 *“Success signals are conditioned on the real thing”* — cha
 | Finding | Evidence | Severity |
 |---------|----------|----------|
 | Weak `SECRET_KEY` in `backend/.env` | `studymaster-jwt-secret-key-2026-very-secure` (low entropy, committed-adjacent) | Medium |
-| Real `NVIDIA_API_KEY` on disk | `nvapi-5jWMxO0Su7Rf…` in `backend/.env` (ignored by `.gitignore` but present, no rotation hint) | High if repo public |
+| Real `NVIDIA_API_KEY` on disk | `nvapi-***` in `backend/.env` (ignored by `.gitignore` but present, no rotation hint) | High if repo public |
 | `DATABASE_URL` placeholder with fake password | `postgres.your-project-ref:[YOUR-PASSWORD]@aws-0…` — will crash production without override | High (startup crash) |
 | CORS `*` | Intended for dev per spec, acceptable for 2-user MVP | Low |
 

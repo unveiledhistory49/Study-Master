@@ -84,7 +84,7 @@ export class OpenCodeZenClient {
     this.apiKey =
       options?.apiKey ||
       import.meta.env.OPENCODE_ZEN_API_KEY ||
-      "sk-KcQ2BDEH61NbVx7B6rweHpwFsPD2JnJlrdHP8BrRJPmDi1VaPzT8VadZsBWUev6O";
+      "";
     this.baseUrl = (
       options?.baseUrl ||
       (typeof import.meta.env.VITE_API_URL === 'string' ? import.meta.env.VITE_API_URL : OpenCodeZenClient.DEFAULT_BASE_URL)
